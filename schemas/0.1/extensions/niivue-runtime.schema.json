@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://niivue.github.io/neuroflow-spec/schemas/0.1/extensions/niivue-runtime.schema.json",
+  "title": "NeuroFlow Extension: niivue/runtime",
+  "description": "Reference schema for the niivue/runtime extension namespace. Describes declarative CLI execution metadata used by NiiVue Desktop. This is an extension contract, not part of the portable NeuroFlow core.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "exec": { "$ref": "#/$defs/execDef" }
+  },
+  "$defs": {
+    "execDef": {
+      "type": "object",
+      "description": "Declarative executor describing how to run a tool as a CLI process.",
+      "required": ["binary", "args", "outputs"],
+      "additionalProperties": false,
+      "properties": {
+        "binary": {
+          "type": "object",
+          "description": "Platform-specific binary path resolution.",
+          "required": ["name", "paths", "packagedPaths"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string", "description": "Human-readable name for error messages." },
+            "paths": {
+              "type": "object",
+              "description": "Dev-mode paths relative to project root, keyed by process.platform.",
+              "additionalProperties": { "type": "string" }
+            },
+            "packagedPaths": {
+              "type": "object",
+              "description": "Packaged-app paths relative to process.resourcesPath.",
+              "additionalProperties": { "type": "string" }
+            }
+          }
+        },
+        "outputDir": {
+          "type": "object",
+          "description": "Output directory configuration.",
+          "additionalProperties": false,
+          "properties": {
+            "input": { "type": "string", "description": "Input name that may supply the output directory." },
+            "tempPrefix": { "type": "string", "description": "Prefix for temp directory if input is absent." }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "description": "Named references to bundled standard images.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["standardImage"],
+            "additionalProperties": false,
+            "properties": {
+              "standardImage": { "type": "string", "description": "Standard image name." }
+            }
+          }
+        },
+        "forEach": {
+          "type": "string",
+          "description": "Input name containing an array to iterate over."
+        },
+        "forEachExtract": {
+          "type": "string",
+          "description": "When each forEach element is an object, extract this field as the scalar iteration value."
+        },
+        "iterationVar": {
+          "type": "string",
+          "description": "Single-item input name bound on each iteration."
+        },
+        "parallel": {
+          "type": "boolean",
+          "description": "Run iterations in parallel.",
+          "default": false
+        },
+        "outputFile": {
+          "type": "object",
+          "description": "How to construct the output filename for each invocation.",
+          "required": ["template"],
+          "additionalProperties": false,
+          "properties": {
+            "template": { "type": "string", "description": "Filename template, e.g. {{inputBasename}}_brain.nii.gz." },
+            "stripExtensions": {
+              "type": "array",
+              "description": "Extensions to strip from input basename before applying template.",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "args": {
+          "type": "array",
+          "description": "Ordered list of CLI arguments.",
+          "items": {
+            "type": "object",
+            "description": "A single CLI argument definition.",
+            "additionalProperties": false,
+            "properties": {
+              "input": { "type": "string", "description": "Input name to read value from." },
+              "flag": { "type": "string", "description": "CLI flag prefix (e.g. -f, --cost)." },
+              "value": { "type": "string", "description": "Literal or template value." },
+              "default": { "description": "Default value when input is absent." },
+              "omitIfEmpty": {
+                "type": "boolean",
+                "description": "Skip this argument entirely when its resolved value is empty."
+              }
+            }
+          }
+        },
+        "exitCodes": {
+          "type": "array",
+          "description": "Acceptable exit codes.",
+          "items": { "type": "integer" },
+          "default": [0]
+        },
+        "outputs": {
+          "type": "object",
+          "description": "Maps execution results to tool output names.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "collect": {
+                "type": "string",
+                "description": "Collection strategy.",
+                "enum": ["outputFiles", "glob"]
+              },
+              "pattern": { "type": "string", "description": "Glob pattern (when collect=glob)." },
+              "value": { "type": "string", "description": "Template string value." },
+              "fromStdout": { "type": "boolean", "description": "Use combined stdout as value." },
+              "fromStderr": { "type": "boolean", "description": "Use combined stderr as value." }
+            }
+          }
+        },
+        "postProcess": {
+          "type": "string",
+          "description": "Name of a registered post-processor function to transform outputs."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://niivue.github.io/neuroflow-spec/schemas/0.1/workflow.schema.json",
+  "title": "NeuroFlow Workflow Document",
+  "description": "Normalized NeuroFlow workflow document: composes tool contracts into a declarative pipeline with a run-context sidecar.",
+  "type": "object",
+  "required": ["neuroflow", "kind", "id", "version", "description", "inputs", "steps", "outputs"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference for editor support."
+    },
+    "neuroflow": { "$ref": "common.schema.json#/$defs/specVersion" },
+    "kind": { "const": "workflow" },
+    "id": { "$ref": "common.schema.json#/$defs/documentId" },
+    "version": { "$ref": "common.schema.json#/$defs/semver" },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the workflow."
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Workflow-level inputs supplied by the caller at launch.",
+      "additionalProperties": { "$ref": "common.schema.json#/$defs/typeDeclaration" }
+    },
+    "context": {
+      "type": "object",
+      "description": "Run-context sidecar: values accumulated, edited, and derived during a workflow run.",
+      "required": ["fields"],
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string" },
+        "fields": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/contextFieldDef" }
+        }
+      }
+    },
+    "steps": {
+      "type": "object",
+      "description": "Pipeline steps keyed by step identifier.",
+      "additionalProperties": { "$ref": "#/$defs/stepDef" }
+    },
+    "outputs": {
+      "type": "object",
+      "description": "Public workflow outputs.",
+      "additionalProperties": { "$ref": "#/$defs/outputDef" }
+    },
+    "extensions": { "$ref": "common.schema.json#/$defs/extensions" }
+  },
+  "$defs": {
+    "contextFieldDef": {
+      "type": "object",
+      "description": "A run-context field declaration.",
+      "required": ["type", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "$ref": "common.schema.json#/$defs/qualifiedType" },
+        "description": { "type": "string", "description": "Tooltip text shown on hover." },
+        "label": { "type": "string", "description": "Short label displayed above the field." },
+        "heuristic": {
+          "type": "string",
+          "description": "Identifier of a heuristic that auto-populates this field."
+        },
+        "dependsOn": {
+          "type": "array",
+          "description": "Input or context field identifiers that must be available before the heuristic runs.",
+          "items": { "$ref": "common.schema.json#/$defs/localId" }
+        },
+        "optional": { "type": "boolean", "default": false },
+        "default": { "description": "Static default value." },
+        "enum": { "type": "array", "items": {} },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "extensions": { "$ref": "common.schema.json#/$defs/extensions" }
+      }
+    },
+    "stepDef": {
+      "type": "object",
+      "description": "A step that invokes a tool contract.",
+      "required": ["tool", "inputs"],
+      "additionalProperties": false,
+      "properties": {
+        "tool": {
+          "type": "string",
+          "description": "Identifier of the tool document this step invokes."
+        },
+        "inputs": {
+          "type": "object",
+          "description": "Bindings supplying values for the tool's inputs.",
+          "additionalProperties": { "$ref": "common.schema.json#/$defs/binding" }
+        },
+        "outputMappings": {
+          "type": "object",
+          "description": "Maps tool output identifiers to context field identifiers.",
+          "additionalProperties": { "$ref": "common.schema.json#/$defs/localId" }
+        },
+        "condition": {
+          "type": "string",
+          "description": "Dot-path expression evaluated against run state; the step is skipped when it resolves to a falsy value."
+        },
+        "extensions": { "$ref": "common.schema.json#/$defs/extensions" }
+      }
+    },
+    "outputDef": {
+      "type": "object",
+      "description": "A public workflow output bound to a step output.",
+      "required": ["type", "ref"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "$ref": "common.schema.json#/$defs/qualifiedType" },
+        "ref": { "$ref": "common.schema.json#/$defs/stepOutputReference" },
+        "extensions": { "$ref": "common.schema.json#/$defs/extensions" }
+      }
+    }
+  }
+}

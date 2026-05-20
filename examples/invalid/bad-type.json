@@ -1,0 +1,14 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-type",
+  "version": "1.0.0",
+  "description": "A tool input uses a legacy, unqualified type string instead of a namespaced type.",
+  "inputs": {
+    "volume": {
+      "type": "volume",
+      "description": "Input volume."
+    }
+  },
+  "outputs": {}
+}

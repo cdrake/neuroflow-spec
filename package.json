@@ -1,0 +1,13 @@
+{
+  "name": "neuroflow-spec",
+  "version": "0.1.0",
+  "description": "NeuroFlow: a vendor-neutral, JSON-first specification for declarative neuroimaging pipelines.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node tests/validate.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1"
+  }
+}

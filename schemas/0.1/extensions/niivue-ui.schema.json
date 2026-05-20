@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://niivue.github.io/neuroflow-spec/schemas/0.1/extensions/niivue-ui.schema.json",
+  "title": "NeuroFlow Extension: niivue/ui",
+  "description": "Reference schema for the niivue/ui extension namespace. Describes designer-palette, menu, and form metadata used by NiiVue Desktop. This is an extension contract, not part of the portable NeuroFlow core.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "menu": {
+      "type": "string",
+      "description": "Menu heading a workflow appears under.",
+      "enum": ["Import", "Processing", "Export"]
+    },
+    "form": {
+      "type": "object",
+      "description": "Custom form layout for reviewing and editing context fields.",
+      "required": ["sections"],
+      "additionalProperties": false,
+      "properties": {
+        "sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/formSectionDef" }
+        }
+      }
+    },
+    "block": {
+      "description": "Designer-palette metadata for a tool. A single object produces one palette entry; an array produces multiple variants.",
+      "oneOf": [
+        { "$ref": "#/$defs/blockDef" },
+        { "type": "array", "items": { "$ref": "#/$defs/blockDef" } }
+      ]
+    }
+  },
+  "$defs": {
+    "formSectionDef": {
+      "type": "object",
+      "required": ["title", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "description": "Section heading." },
+        "description": { "type": "string", "description": "Optional explanatory text." },
+        "fields": {
+          "type": "array",
+          "description": "Context field identifiers displayed in this section.",
+          "items": { "type": "string" }
+        },
+        "component": {
+          "type": "string",
+          "description": "Optional registered custom component name instead of auto-generated controls."
+        },
+        "buttonText": {
+          "type": "string",
+          "description": "Custom label for the primary action button when this is the last section."
+        },
+        "postCompletion": {
+          "type": "boolean",
+          "description": "If true, this section renders after engine steps execute."
+        }
+      }
+    },
+    "blockDef": {
+      "type": "object",
+      "description": "How a tool appears as a block in the visual designer.",
+      "required": ["id", "label", "description", "category", "exposedFields"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique block identifier (kebab-case).",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "label": { "type": "string", "description": "Friendly label shown in the palette." },
+        "description": { "type": "string", "description": "One-line description shown below the label." },
+        "category": {
+          "type": "string",
+          "enum": ["Import", "Processing", "Quality", "Output"]
+        },
+        "icon": { "type": "string", "description": "Radix icon component name." },
+        "defaults": {
+          "type": "object",
+          "description": "Pre-filled input values hidden from the user form.",
+          "additionalProperties": true
+        },
+        "exposedFields": {
+          "type": "array",
+          "description": "Tool input names that appear in the user-facing form.",
+          "items": { "type": "string" }
+        },
+        "hiddenFields": {
+          "type": "array",
+          "description": "Tool input names that are hidden.",
+          "items": { "type": "string" }
+        },
+        "requiredContextFields": {
+          "type": "array",
+          "description": "Extra context fields the block's form component reads at runtime.",
+          "items": { "type": "string" }
+        },
+        "contextFields": {
+          "type": "object",
+          "description": "Inline context-field definitions for fields exposed by this block that don't map to a tool input/output.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["type", "description"],
+            "additionalProperties": false,
+            "properties": {
+              "type": { "$ref": "../common.schema.json#/$defs/qualifiedType" },
+              "label": { "type": "string" },
+              "description": { "type": "string" },
+              "optional": { "type": "boolean" },
+              "heuristic": { "type": "string" },
+              "dependsOn": {
+                "type": "array",
+                "items": { "$ref": "../common.schema.json#/$defs/localId" }
+              },
+              "default": {},
+              "enum": { "type": "array", "items": {} },
+              "min": { "type": "number" },
+              "max": { "type": "number" }
+            }
+          }
+        },
+        "formComponent": {
+          "type": "string",
+          "description": "Custom form component name."
+        },
+        "condition": {
+          "type": "string",
+          "description": "Optional dot-path condition expression for conditional execution."
+        },
+        "heuristics": {
+          "type": "object",
+          "description": "Map from exposed field name to heuristic name that auto-populates it.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    }
+  }
+}

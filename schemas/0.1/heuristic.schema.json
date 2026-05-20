@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://niivue.github.io/neuroflow-spec/schemas/0.1/heuristic.schema.json",
+  "title": "NeuroFlow Heuristic Document",
+  "description": "Normalized NeuroFlow heuristic document: deterministic value derivation via an ordered chain of operations.",
+  "type": "object",
+  "required": ["neuroflow", "kind", "id", "version", "description", "source", "operations", "output"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference for editor support."
+    },
+    "neuroflow": { "$ref": "common.schema.json#/$defs/specVersion" },
+    "kind": { "const": "heuristic" },
+    "id": { "$ref": "common.schema.json#/$defs/documentId" },
+    "version": { "$ref": "common.schema.json#/$defs/semver" },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this heuristic computes."
+    },
+    "preserveExisting": {
+      "type": "boolean",
+      "description": "If true, return the existing context value when it is non-empty (preserves user edits).",
+      "default": false
+    },
+    "source": { "$ref": "common.schema.json#/$defs/reference" },
+    "operations": {
+      "type": "array",
+      "description": "Ordered chain of deterministic transformations applied to the source value.",
+      "items": { "$ref": "#/$defs/operationDef" }
+    },
+    "output": { "$ref": "common.schema.json#/$defs/qualifiedType" },
+    "extensions": { "$ref": "common.schema.json#/$defs/extensions" }
+  },
+  "$defs": {
+    "operationDef": {
+      "type": "object",
+      "required": ["op"],
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "type": "string",
+          "description": "Operation type.",
+          "enum": [
+            "filter",
+            "map",
+            "sort",
+            "group-by",
+            "flatten",
+            "unique",
+            "count",
+            "first",
+            "last",
+            "default",
+            "lookup",
+            "set-field",
+            "merge",
+            "pick-fields",
+            "template"
+          ]
+        },
+        "field": {
+          "type": "string",
+          "description": "Dot-path to the field within each item (for filter, sort, group-by, etc.)."
+        },
+        "operator": {
+          "type": "string",
+          "description": "Comparison operator (for filter).",
+          "enum": [
+            "eq", "neq", "gt", "gte", "lt", "lte",
+            "contains", "not-contains", "starts-with", "ends-with",
+            "matches", "exists", "not-exists", "in", "not-in"
+          ]
+        },
+        "value": {
+          "description": "Comparison value (for filter), default value (for the default op), or template string."
+        },
+        "fields": {
+          "type": "array",
+          "description": "Field names to pick (for pick-fields) or merge (for merge).",
+          "items": { "type": "string" }
+        },
+        "order": {
+          "type": "string",
+          "description": "Sort order (for sort).",
+          "enum": ["asc", "desc"],
+          "default": "asc"
+        },
+        "contextField": {
+          "type": "string",
+          "description": "Dot-path to a context field for lookup operations."
+        },
+        "targetField": {
+          "type": "string",
+          "description": "Field name to write to on each item (for set-field)."
+        },
+        "template": {
+          "type": "string",
+          "description": "Template string with {{field}} placeholders (for the template op)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional human-readable label for this operation."
+        }
+      }
+    }
+  }
+}
