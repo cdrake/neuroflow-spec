@@ -9,21 +9,26 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Ajv2020 from 'ajv/dist/2020.js'
+import addFormats from 'ajv-formats'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
 const schemaDir = join(root, 'schemas', '0.1')
 
 const ajv = new Ajv2020({ allErrors: true, strict: false })
+addFormats(ajv)
 
 // Register every schema file by its $id so cross-file $refs resolve.
 const schemaFiles = [
   'common.schema.json',
+  'events.schema.json',
   'workflow.schema.json',
   'tool.schema.json',
   'heuristic.schema.json',
+  'provenance.schema.json',
   'extensions/niivue-ui.schema.json',
-  'extensions/niivue-runtime.schema.json'
+  'extensions/niivue-runtime.schema.json',
+  'extensions/bids-profile.schema.json'
 ]
 for (const rel of schemaFiles) {
   const schema = JSON.parse(readFileSync(join(schemaDir, rel), 'utf8'))
@@ -34,7 +39,8 @@ const base = 'https://niivue.github.io/neuroflow-spec/schemas/0.1/'
 const validators = {
   workflow: ajv.getSchema(base + 'workflow.schema.json'),
   tool: ajv.getSchema(base + 'tool.schema.json'),
-  heuristic: ajv.getSchema(base + 'heuristic.schema.json')
+  heuristic: ajv.getSchema(base + 'heuristic.schema.json'),
+  provenance: ajv.getSchema(base + 'provenance.schema.json')
 }
 
 let failures = 0

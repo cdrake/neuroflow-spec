@@ -8,6 +8,7 @@
     "test": "node tests/validate.mjs"
   },
   "devDependencies": {
-    "ajv": "^8.17.1"
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
   }
 }

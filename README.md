@@ -11,10 +11,32 @@ Status: pre-1.0 draft, created 2026-05-20.
 
 - [spec/neuroflow-0.1.md](spec/neuroflow-0.1.md): draft normative specification.
 - [schemas/0.1/](schemas/0.1/): machine-readable JSON Schemas (Draft 2020-12)
-  for the `workflow`, `tool`, and `heuristic` document families, plus the
-  `niivue/ui` and `niivue/runtime` reference extension schemas.
+  for the `workflow`, `tool`, `heuristic`, and `provenance` document families,
+  the shared runtime-events definitions in `events.schema.json`, plus the
+  `niivue/ui`, `niivue/runtime`, and `bids/profile` reference extension
+  schemas.
 - [rfcs/0001-neuroflow-core.md](rfcs/0001-neuroflow-core.md): the accepted RFC
   for the core document model and evolution path.
+- [rfcs/0002-runtime-events.md](rfcs/0002-runtime-events.md): proposed RFC
+  adding the runtime-events channel to the portable core.
+- [rfcs/0003-provenance.md](rfcs/0003-provenance.md): proposed RFC adding the
+  `provenance` document family as the deliverable run record.
+- [rfcs/0004-sibling-subscriptions.md](rfcs/0004-sibling-subscriptions.md):
+  proposed RFC extending events with sibling-step event subscriptions
+  (monitor / aggregator / orchestrator patterns).
+- [rfcs/0005-fix-proposals.md](rfcs/0005-fix-proposals.md): proposed RFC for
+  the detector → fixer → re-validate pattern (BIDS sidecar repair, refacing,
+  subject relabeling).
+- [rfcs/0006-bids-profile.md](rfcs/0006-bids-profile.md): proposed RFC for the
+  `bids/profile` reference extension namespace.
+- [rfcs/0007-error-handling.md](rfcs/0007-error-handling.md): proposed RFC for
+  the portable error-handling model (per-item failures, step and workflow
+  `errorPolicy`, cooperative cancellation, partial / halted provenance).
+- [rfcs/0008-output-delivery.md](rfcs/0008-output-delivery.md): proposed RFC
+  for the portable output-delivery model — closed `core:` delivery
+  vocabulary (stdout-json, result-file, result-dir, event-stream,
+  fixed-path, exit-code), tool-level defaults with per-output overrides,
+  and `NEUROFLOW_OUTPUT_*` channel discovery.
 - [docs/niivue-desktop-source-model.md](docs/niivue-desktop-source-model.md):
   historical notes on the original NiiVue Desktop model and its mapping.
 - [examples/](examples/): valid example documents, plus `examples/invalid/`
@@ -68,15 +90,35 @@ semantics.
 
 The schema-backed 0.1 draft is in place:
 
-- Shared schema primitives, a formal reference grammar, and namespaced types.
-- Normalized `workflow`, `tool`, and `heuristic` schemas.
-- Reference extension schemas for the `niivue/ui` and `niivue/runtime`
-  namespaces.
+- Shared schema primitives, a formal reference grammar, and namespaced types
+  drawn from the closed `core:`, `neuro:`, `bids:`, and `prov:` vocabularies.
+- Normalized `workflow`, `tool`, `heuristic`, and `provenance` schemas.
+- A transport-agnostic runtime-events channel (RFC 0002) with a closed set
+  of standard transports (stdout/stderr NDJSON, event file, event directory,
+  Unix socket, named pipe, TCP, HTTP webhook, WebSocket) and an extension
+  grammar for additional transports.
+- Sibling-step event subscriptions (RFC 0004) for monitor, aggregator, and
+  orchestrator patterns.
+- A fix-proposal pattern (RFC 0005) for the detector → fixer → re-validate
+  loop common in BIDS, refacing, and subject-relabel pipelines.
+- A `provenance` document family (RFC 0003) aligned with W3C PROV and
+  intended to embed in BIDS-Derivatives and RO-Crate research objects.
+- A portable error-handling model (RFC 0007) with per-item-failure events,
+  step and workflow `errorPolicy`, cooperative cancellation, and
+  `partial` / `halted` run statuses in provenance. Workflow resumption
+  remains a runtime implementation concern.
+- A portable output-delivery model (RFC 0008) with a closed `core:`
+  delivery vocabulary covering stdout JSON, result file, result
+  directory, event stream, fixed path, and exit code; tool-level
+  defaults and per-output overrides; and `NEUROFLOW_OUTPUT_*` channel
+  discovery.
+- Reference extension schemas for the `niivue/ui`, `niivue/runtime`, and
+  `bids/profile` namespaces.
 - A conformance harness with valid and invalid example documents.
 
 NiiVue Desktop is the reference implementation: it vendors these schemas and
 migrates its workflow JSON to the normalized shape.
 
 Next: semantic validation rules beyond JSON Schema (reference resolution,
-dependency cycles, type compatibility), and follow-up RFCs for the open issues
-listed in the specification.
+dependency cycles, type compatibility, event-binding and fix-loop validity),
+and follow-up RFCs for the open issues listed in the specification.

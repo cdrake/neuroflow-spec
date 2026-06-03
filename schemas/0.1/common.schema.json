@@ -14,6 +14,11 @@
       "description": "Document version using semantic versioning.",
       "pattern": "^\\d+\\.\\d+\\.\\d+$"
     },
+    "workflowStage": {
+      "type": "string",
+      "description": "Informal, opt-in grouping of where a tool or step sits in the coarse flow of a workflow: ingest (bring data in and shape it into a dataset), explore (review, correct, and process artifacts), or publish (compose figures, captions, graphs, and reports). Stages are a non-normative discovery aid; a conforming runtime MUST NOT branch execution on them. See specification Section 27.",
+      "enum": ["ingest", "explore", "publish"]
+    },
     "documentId": {
       "type": "string",
       "description": "Stable, namespace-qualified document identifier (reverse-DNS, URI-like, or registry-qualified).",
@@ -25,7 +30,7 @@
       "pattern": "^[a-z][A-Za-z0-9]*(?:[-_][A-Za-z0-9]+)*$"
     },
     "qualifiedType": {
-      "description": "Namespace-qualified type string. The core: and neuro: namespaces are closed vocabularies defined by this specification; any other namespace denotes an open extension type. Arrays use the container form core:array<element-type>.",
+      "description": "Namespace-qualified type string. The core:, neuro:, bids:, and prov: namespaces are closed vocabularies defined by this specification; any other namespace denotes an open extension type. Arrays use the container form core:array<element-type>.",
       "anyOf": [
         { "$ref": "#/$defs/specType" },
         { "$ref": "#/$defs/extensionType" }
@@ -33,7 +38,7 @@
     },
     "specType": {
       "type": "string",
-      "description": "A scalar or array type drawn from the spec-defined core: and neuro: vocabularies.",
+      "description": "A scalar or array type drawn from the spec-defined core:, neuro:, bids:, and prov: vocabularies.",
       "enum": [
         "core:string",
         "core:number",
@@ -53,6 +58,25 @@
         "neuro:label-map",
         "neuro:transform",
         "neuro:surface",
+        "neuro:tract",
+        "neuro:ome-zarr",
+        "neuro:ngff-zarr",
+        "bids:dataset-description",
+        "bids:participants-table",
+        "bids:participants-sidecar",
+        "bids:sidecar",
+        "bids:events-table",
+        "bids:scans-table",
+        "bids:sessions-table",
+        "bids:validation-report",
+        "bids:fix-proposal",
+        "bids:derivatives-dataset",
+        "bids:entity-map",
+        "prov:run-record",
+        "prov:checksum",
+        "prov:agent",
+        "prov:activity",
+        "prov:entity",
         "core:array<core:string>",
         "core:array<core:number>",
         "core:array<core:integer>",
@@ -70,13 +94,24 @@
         "core:array<neuro:series-mapping>",
         "core:array<neuro:label-map>",
         "core:array<neuro:transform>",
-        "core:array<neuro:surface>"
+        "core:array<neuro:surface>",
+        "core:array<neuro:tract>",
+        "core:array<neuro:ome-zarr>",
+        "core:array<neuro:ngff-zarr>",
+        "core:array<bids:sidecar>",
+        "core:array<bids:validation-report>",
+        "core:array<bids:fix-proposal>",
+        "core:array<bids:events-table>",
+        "core:array<prov:agent>",
+        "core:array<prov:activity>",
+        "core:array<prov:entity>",
+        "core:array<prov:checksum>"
       ]
     },
     "extensionType": {
       "type": "string",
-      "description": "A type contributed by a third-party namespace (any namespace other than core: or neuro:), in scalar or core:array<...> container form.",
-      "pattern": "^(?:(?!(?:core|neuro):)[a-z][a-z0-9.-]*:[a-z][a-z0-9-]*|core:array<(?!(?:core|neuro):)[a-z][a-z0-9.-]*:[a-z][a-z0-9-]*>)$"
+      "description": "A type contributed by a third-party namespace (any namespace other than core:, neuro:, bids:, or prov:), in scalar or core:array<...> container form.",
+      "pattern": "^(?:(?!(?:core|neuro|bids|prov):)[a-z][a-z0-9.-]*:[a-z][a-z0-9-]*|core:array<(?!(?:core|neuro|bids|prov):)[a-z][a-z0-9.-]*:[a-z][a-z0-9-]*>)$"
     },
     "reference": {
       "type": "string",

@@ -1,0 +1,44 @@
+{
+  "$schema": "../schemas/0.1/tool.schema.json",
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.examples/ome-zarr-pyramid",
+  "version": "1.0.0",
+  "description": "Convert a NIfTI volume into an OME-Zarr multiscale pyramid, exposing both the on-disk OME-Zarr store and the ngff-zarr multiscale model.",
+  "inputs": {
+    "volume": {
+      "type": "neuro:volume",
+      "description": "Source NIfTI volume to pyramidize."
+    },
+    "scales": {
+      "type": "core:integer",
+      "description": "Number of pyramid levels to generate.",
+      "optional": true,
+      "default": 4,
+      "min": 1,
+      "max": 8
+    }
+  },
+  "outputs": {
+    "pyramid": {
+      "type": "neuro:ome-zarr",
+      "description": "OME-Zarr (OME-NGFF) multiscale store written to disk.",
+      "delivery": {
+        "mode": "core:result-dir",
+        "path": "pyramid.ome.zarr"
+      }
+    },
+    "multiscale": {
+      "type": "neuro:ngff-zarr",
+      "description": "The ngff-zarr multiscale data model describing the pyramid (named dims, scale/translation, units).",
+      "optional": true,
+      "delivery": {
+        "mode": "core:result-file",
+        "path": "multiscale.ngff.json"
+      }
+    }
+  },
+  "outputDelivery": {
+    "default": "core:result-dir"
+  }
+}

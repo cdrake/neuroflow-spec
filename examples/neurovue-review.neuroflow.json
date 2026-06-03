@@ -1,0 +1,39 @@
+{
+  "$schema": "../schemas/0.1/tool.schema.json",
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.examples/neurovue-review",
+  "version": "1.0.0",
+  "description": "Interactive review tool exercising the neuro:tract closed type and the neurovue:correction-patch extension type. Opens volumes, surfaces, and tracts and returns a small correction patch.",
+  "inputs": {
+    "volumes": {
+      "type": "core:array<neuro:volume>",
+      "description": "NIfTI volumes to review.",
+      "optional": true
+    },
+    "surfaces": {
+      "type": "core:array<neuro:surface>",
+      "description": "Surface meshes to overlay.",
+      "optional": true
+    },
+    "tracts": {
+      "type": "core:array<neuro:tract>",
+      "description": "Tractography streamlines to overlay.",
+      "optional": true
+    }
+  },
+  "outputs": {
+    "correction_patch": {
+      "type": "neurovue:correction-patch",
+      "description": "Viewer-specific correction artifact (extension namespace, not part of the closed neuro: vocabulary).",
+      "optional": true,
+      "delivery": {
+        "mode": "core:result-file",
+        "path": "correction.patch.json"
+      }
+    }
+  },
+  "outputDelivery": {
+    "default": "core:result-file"
+  }
+}

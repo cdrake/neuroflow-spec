@@ -1,0 +1,262 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "provenance",
+  "id": "niivue.desktop/dicom-to-bids/run-2026-05-24-001",
+  "version": "1.0.0",
+  "description": "Provenance for a DICOM-to-BIDS run including one approved sidecar fix for missing RepetitionTime.",
+  "run": {
+    "runId": "run-2026-05-24-001",
+    "startedAt": "2026-05-24T12:00:00.000Z",
+    "endedAt":   "2026-05-24T12:18:42.500Z",
+    "status": "completed",
+    "host": {
+      "platform": "darwin",
+      "arch": "arm64",
+      "hostname": "lab-mac-01"
+    }
+  },
+  "workflow": {
+    "id": "niivue.desktop/dicom-to-bids",
+    "version": "2.0.0",
+    "checksum": {
+      "algorithm": "sha256",
+      "value": "8d6b0f6b3cda4f5fd4e8c4f3a4b9a7c2dabc1a2c3e7f4b5c6d7e8f9a0b1c2d3e"
+    }
+  },
+  "agents": [
+    {
+      "id": "agent-niivue-desktop",
+      "type": "software",
+      "name": "NiiVue Desktop",
+      "version": "0.7.3",
+      "role": "runtime"
+    },
+    {
+      "id": "agent-dcm2niix",
+      "type": "software",
+      "name": "dcm2niix",
+      "version": "1.0.20240202",
+      "binary": "/Applications/NiiVue Desktop.app/Contents/Resources/bin/dcm2niix",
+      "role": "conversion-tool"
+    },
+    {
+      "id": "agent-bids-classify",
+      "type": "software",
+      "name": "bids-classify",
+      "version": "1.1.0",
+      "role": "classifier"
+    },
+    {
+      "id": "agent-bids-validate",
+      "type": "software",
+      "name": "bids-validator",
+      "version": "1.14.0",
+      "role": "validator"
+    },
+    {
+      "id": "agent-bids-fix",
+      "type": "software",
+      "name": "bids-fix-sidecar",
+      "version": "0.3.1",
+      "role": "fixer"
+    },
+    {
+      "id": "agent-operator-001",
+      "type": "person",
+      "name": "C. Drake",
+      "contact": "https://orcid.org/0000-0000-0000-0000",
+      "role": "operator"
+    }
+  ],
+  "activities": [
+    {
+      "id": "act-convert",
+      "stepId": "convert",
+      "toolId": "niivue.desktop.tools/dcm2niix",
+      "toolVersion": "1.0.20240202",
+      "agent": "agent-dcm2niix",
+      "startedAt": "2026-05-24T12:00:01.100Z",
+      "endedAt":   "2026-05-24T12:10:33.220Z",
+      "status": "completed",
+      "used":      ["ent-dicom-dir"],
+      "generated": ["ent-converted-volumes", "ent-converted-sidecars"],
+      "exitCode": 0
+    },
+    {
+      "id": "act-classify",
+      "stepId": "classify",
+      "toolId": "niivue.desktop.tools/bids-classify",
+      "toolVersion": "1.1.0",
+      "agent": "agent-bids-classify",
+      "startedAt": "2026-05-24T12:10:33.230Z",
+      "endedAt":   "2026-05-24T12:11:05.480Z",
+      "status": "completed",
+      "used":      ["ent-converted-sidecars"],
+      "generated": ["ent-series-mappings", "ent-subjects"],
+      "contextWrites": {
+        "series_list": "snapshot:ent-series-mappings",
+        "subjects":    "snapshot:ent-subjects"
+      }
+    },
+    {
+      "id": "act-validate-pre",
+      "stepId": "validate",
+      "toolId": "niivue.desktop.tools/bids-validate",
+      "toolVersion": "1.14.0",
+      "agent": "agent-bids-validate",
+      "startedAt": "2026-05-24T12:11:06.000Z",
+      "endedAt":   "2026-05-24T12:11:42.100Z",
+      "status": "completed",
+      "used":      ["ent-converted-sidecars", "ent-series-mappings"],
+      "generated": ["ent-validation-report-pre"]
+    },
+    {
+      "id": "act-fix-sidecar",
+      "stepId": "fix_sidecars",
+      "toolId": "niivue.desktop.tools/bids-fix-sidecar",
+      "toolVersion": "0.3.1",
+      "agent": "agent-bids-fix",
+      "startedAt": "2026-05-24T12:13:55.000Z",
+      "endedAt":   "2026-05-24T12:14:05.220Z",
+      "status": "completed",
+      "used":      ["ent-validation-report-pre", "ent-fix-proposal-tr"],
+      "generated": ["ent-patched-sidecars"]
+    },
+    {
+      "id": "act-validate-post",
+      "stepId": "validate",
+      "toolId": "niivue.desktop.tools/bids-validate",
+      "toolVersion": "1.14.0",
+      "agent": "agent-bids-validate",
+      "startedAt": "2026-05-24T12:14:05.300Z",
+      "endedAt":   "2026-05-24T12:14:36.700Z",
+      "status": "completed",
+      "used":      ["ent-patched-sidecars"],
+      "generated": ["ent-validation-report-post"]
+    },
+    {
+      "id": "act-write",
+      "stepId": "write",
+      "toolId": "niivue.desktop.tools/bids-write",
+      "toolVersion": "1.0.0",
+      "agent": "agent-niivue-desktop",
+      "startedAt": "2026-05-24T12:14:40.000Z",
+      "endedAt":   "2026-05-24T12:18:42.000Z",
+      "status": "completed",
+      "used":      ["ent-converted-volumes", "ent-patched-sidecars", "ent-series-mappings"],
+      "generated": ["ent-bids-dataset"]
+    }
+  ],
+  "entities": [
+    {
+      "id": "ent-dicom-dir",
+      "type": "neuro:dicom-folder",
+      "role": "workflow-input",
+      "path": "/data/dicoms/proj-a/batch-3",
+      "checksum": { "algorithm": "sha256", "value": "aa11bb22cc33dd44ee55ff6677889900112233445566778899aabbccddeeff00" }
+    },
+    {
+      "id": "ent-converted-volumes",
+      "type": "core:array<neuro:volume>",
+      "role": "step-output",
+      "path": "derivatives/niivue-desktop/staging/volumes/",
+      "derivedFrom": ["ent-dicom-dir"]
+    },
+    {
+      "id": "ent-converted-sidecars",
+      "type": "core:array<bids:sidecar>",
+      "role": "step-output",
+      "path": "derivatives/niivue-desktop/staging/sidecars/",
+      "derivedFrom": ["ent-dicom-dir"]
+    },
+    {
+      "id": "ent-series-mappings",
+      "type": "core:array<neuro:series-mapping>",
+      "role": "context-snapshot",
+      "value": "(serialized series-mapping list)"
+    },
+    {
+      "id": "ent-subjects",
+      "type": "core:array<neuro:subject>",
+      "role": "context-snapshot",
+      "value": "(serialized subject list)"
+    },
+    {
+      "id": "ent-validation-report-pre",
+      "type": "bids:validation-report",
+      "role": "step-output",
+      "derivedFrom": ["ent-converted-sidecars", "ent-series-mappings"]
+    },
+    {
+      "id": "ent-fix-proposal-tr",
+      "type": "bids:fix-proposal",
+      "role": "intermediate",
+      "value": {
+        "summary": "Populate RepetitionTime from DICOM tag (0018,0080) for 3 BOLD sidecars.",
+        "targets": [
+          { "path": "sub-001/func/sub-001_task-rest_bold.json", "set": { "RepetitionTime": 2.0 } },
+          { "path": "sub-002/func/sub-002_task-rest_bold.json", "set": { "RepetitionTime": 2.0 } },
+          { "path": "sub-003/func/sub-003_task-rest_bold.json", "set": { "RepetitionTime": 2.0 } }
+        ]
+      }
+    },
+    {
+      "id": "ent-patched-sidecars",
+      "type": "core:array<bids:sidecar>",
+      "role": "step-output",
+      "path": "derivatives/niivue-desktop/staging/sidecars-patched/",
+      "derivedFrom": ["ent-converted-sidecars", "ent-fix-proposal-tr"]
+    },
+    {
+      "id": "ent-validation-report-post",
+      "type": "bids:validation-report",
+      "role": "step-output",
+      "derivedFrom": ["ent-patched-sidecars"]
+    },
+    {
+      "id": "ent-bids-dataset",
+      "type": "neuro:bids-dataset",
+      "role": "workflow-output",
+      "path": "/data/bids/proj-a/",
+      "checksum": { "algorithm": "sha256", "value": "112233445566778899aabbccddeeff00aa11bb22cc33dd44ee55ff6677889900" },
+      "derivedFrom": ["ent-converted-volumes", "ent-patched-sidecars", "ent-series-mappings"]
+    }
+  ],
+  "inputs": {
+    "dicom_dir": "ent-dicom-dir"
+  },
+  "outputs": {
+    "bids_dir": "ent-bids-dataset"
+  },
+  "decisions": [
+    {
+      "id": "dec-fix-tr",
+      "kind": "fix-approval",
+      "at": "2026-05-24T12:13:50.000Z",
+      "activity": "act-fix-sidecar",
+      "agent": "agent-operator-001",
+      "summary": "Approved auto-fix that populated RepetitionTime from DICOM (0018,0080) for 3 sidecars.",
+      "proposal": { "entity": "ent-fix-proposal-tr" }
+    }
+  ],
+  "events": [
+    {
+      "stepId": "convert",
+      "type": "core:status",
+      "timestamp": "2026-05-24T12:00:01.100Z",
+      "message": "started"
+    },
+    {
+      "stepId": "validate",
+      "type": "core:error",
+      "timestamp": "2026-05-24T12:11:42.100Z",
+      "message": "3 BIDS errors (missing RepetitionTime) before fix loop."
+    },
+    {
+      "stepId": "fix_sidecars",
+      "type": "core:status",
+      "timestamp": "2026-05-24T12:14:05.220Z",
+      "message": "completed"
+    }
+  ]
+}

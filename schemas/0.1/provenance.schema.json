@@ -1,0 +1,302 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://niivue.github.io/neuroflow-spec/schemas/0.1/provenance.schema.json",
+  "title": "NeuroFlow Provenance Document",
+  "description": "Normalized NeuroFlow provenance document: a record of one workflow run, aligned with W3C PROV concepts (Entity, Activity, Agent) and intended to be embeddable in BIDS-Derivatives datasets and RO-Crate research objects.",
+  "type": "object",
+  "required": ["neuroflow", "kind", "id", "version", "run", "workflow", "agents", "activities", "entities"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference for editor support."
+    },
+    "neuroflow": { "$ref": "common.schema.json#/$defs/specVersion" },
+    "kind": { "const": "provenance" },
+    "id": { "$ref": "common.schema.json#/$defs/documentId" },
+    "version": { "$ref": "common.schema.json#/$defs/semver" },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of this run."
+    },
+    "run": { "$ref": "#/$defs/runDef" },
+    "workflow": { "$ref": "#/$defs/workflowRef" },
+    "agents": {
+      "type": "array",
+      "description": "Software, person, and organization participants. PROV: Agent.",
+      "items": { "$ref": "#/$defs/agentDef" }
+    },
+    "activities": {
+      "type": "array",
+      "description": "Ordered record of step executions. PROV: Activity.",
+      "items": { "$ref": "#/$defs/activityDef" }
+    },
+    "entities": {
+      "type": "array",
+      "description": "Inputs, intermediate outputs, and final outputs referenced by activities. PROV: Entity.",
+      "items": { "$ref": "#/$defs/entityDef" }
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Workflow input identifiers resolved to entity ids.",
+      "additionalProperties": { "type": "string" }
+    },
+    "outputs": {
+      "type": "object",
+      "description": "Workflow output identifiers resolved to entity ids. These are the final products of the run.",
+      "additionalProperties": { "type": "string" }
+    },
+    "context": {
+      "type": "object",
+      "description": "Final snapshot of run-context values, by context field identifier."
+    },
+    "decisions": {
+      "type": "array",
+      "description": "Branch points, fix proposals, and operator decisions taken during the run.",
+      "items": { "$ref": "#/$defs/decisionDef" }
+    },
+    "events": {
+      "type": "array",
+      "description": "Compact summary of notable runtime events. Full event log is implementation-defined.",
+      "items": { "$ref": "#/$defs/eventSummaryDef" }
+    },
+    "extensions": { "$ref": "common.schema.json#/$defs/extensions" }
+  },
+  "$defs": {
+    "runDef": {
+      "type": "object",
+      "description": "Identifies and times the run.",
+      "required": ["runId", "startedAt", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "runId": { "type": "string", "minLength": 1, "description": "Runtime-assigned identifier. Matches the runId carried in the runtime-events envelope." },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "endedAt": { "type": "string", "format": "date-time" },
+        "status": {
+          "type": "string",
+          "enum": ["completed", "partial", "failed", "cancelled", "halted", "in-progress"],
+          "description": "Terminal status. `partial` indicates the run completed with one or more tolerated step failures (per the workflow's errorPolicy). `halted` indicates the runtime stopped the run at a step failure before its public outputs were produced. `in-progress` is allowed for snapshots taken while a run is still executing."
+        },
+        "haltedAtStep": {
+          "$ref": "common.schema.json#/$defs/localId",
+          "description": "When status is `halted` or `failed`, the step id at which the run stopped."
+        },
+        "cancelReason": {
+          "type": "string",
+          "description": "When status is `cancelled`, optional human-readable reason."
+        },
+        "host": {
+          "type": "object",
+          "description": "Optional host metadata.",
+          "additionalProperties": false,
+          "properties": {
+            "platform": { "type": "string", "description": "e.g. darwin, linux, win32." },
+            "arch": { "type": "string", "description": "e.g. arm64, x86_64." },
+            "hostname": { "type": "string" }
+          }
+        }
+      }
+    },
+    "workflowRef": {
+      "type": "object",
+      "description": "Identifies the workflow document the run executed.",
+      "required": ["id", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/documentId" },
+        "version": { "$ref": "common.schema.json#/$defs/semver" },
+        "checksum": { "$ref": "#/$defs/checksum", "description": "Optional digest of the workflow JSON as executed." }
+      }
+    },
+    "agentDef": {
+      "type": "object",
+      "description": "A software, person, or organization participant.",
+      "required": ["id", "type", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "Agent identifier, unique within this document." },
+        "type": {
+          "type": "string",
+          "enum": ["software", "person", "organization"]
+        },
+        "name": { "type": "string" },
+        "version": { "type": "string", "description": "Software version, when applicable." },
+        "binary": { "type": "string", "description": "Resolved binary path or container image reference, when applicable." },
+        "contact": { "type": "string", "description": "Email or ORCID, for person/organization agents." },
+        "role": { "type": "string", "description": "Free-text role, e.g. operator, conversion-tool, validator." }
+      }
+    },
+    "activityDef": {
+      "type": "object",
+      "description": "One step execution.",
+      "required": ["id", "stepId", "toolId", "startedAt", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "Activity identifier, unique within this document." },
+        "stepId": { "$ref": "common.schema.json#/$defs/localId" },
+        "toolId": { "$ref": "common.schema.json#/$defs/documentId" },
+        "toolVersion": { "$ref": "common.schema.json#/$defs/semver" },
+        "agent": { "type": "string", "description": "Agent id that performed the activity." },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "endedAt": { "type": "string", "format": "date-time" },
+        "status": {
+          "type": "string",
+          "enum": ["completed", "partial", "failed", "skipped", "cancelled"],
+          "description": "Activity status. `partial` indicates the step finished and produced outputs but accumulated one or more tolerated item failures."
+        },
+        "used": {
+          "type": "array",
+          "description": "Entity ids consumed as inputs. PROV: used.",
+          "items": { "type": "string" }
+        },
+        "generated": {
+          "type": "array",
+          "description": "Entity ids produced as outputs. PROV: wasGeneratedBy.",
+          "items": { "type": "string" }
+        },
+        "contextWrites": {
+          "type": "object",
+          "description": "Context fields written by this activity, mapped to their final values for this activity.",
+          "additionalProperties": {}
+        },
+        "exitCode": { "type": "integer" },
+        "error": { "type": "string" },
+        "itemFailures": {
+          "type": "array",
+          "description": "Per-item failures observed during this activity, drawn from core:item-error events emitted by the tool. The presence of entries here is what distinguishes a `partial` activity from a clean `completed` one.",
+          "items": { "$ref": "#/$defs/itemFailureDef" }
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of times the step was executed in this run. Greater than 1 indicates the runtime retried the step after a failure (a runtime-level concern; this field merely records what happened)."
+        },
+        "handlerFor": {
+          "$ref": "common.schema.json#/$defs/localId",
+          "description": "When this activity is an error-handler run (declared by workflow.errorPolicy.onError), the step id of the failing step it was triggered for."
+        }
+      }
+    },
+    "itemFailureDef": {
+      "type": "object",
+      "description": "Record of one core:item-error event surfaced into the provenance.",
+      "required": ["message"],
+      "additionalProperties": false,
+      "properties": {
+        "itemId": { "type": "string" },
+        "input": { "type": "string", "description": "Tool input on which the item appeared." },
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "severity": {
+          "type": "string",
+          "enum": ["warn", "error"],
+          "default": "error"
+        },
+        "at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "entityDef": {
+      "type": "object",
+      "description": "An input, intermediate, or output artifact.",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "Entity identifier, unique within this document." },
+        "type": {
+          "$ref": "common.schema.json#/$defs/qualifiedType",
+          "description": "Qualified NeuroFlow type."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["workflow-input", "workflow-output", "step-input", "step-output", "context-snapshot", "intermediate"],
+          "description": "How the entity participates in the run."
+        },
+        "path": {
+          "type": "string",
+          "description": "Filesystem path for file/directory entities, relative to the run output root when possible."
+        },
+        "value": {
+          "description": "Embedded value for non-file entities (small JSON values)."
+        },
+        "checksum": { "$ref": "#/$defs/checksum" },
+        "size": { "type": "integer", "minimum": 0, "description": "Size in bytes for file entities." },
+        "derivedFrom": {
+          "type": "array",
+          "description": "Entity ids this entity was derived from. PROV: wasDerivedFrom.",
+          "items": { "type": "string" }
+        },
+        "bidsEntities": {
+          "$ref": "#/$defs/bidsEntities",
+          "description": "Optional BIDS entity key/values for entities that live inside a BIDS dataset."
+        }
+      }
+    },
+    "decisionDef": {
+      "type": "object",
+      "description": "A branch point, fix proposal, or operator decision taken during the run.",
+      "required": ["id", "kind", "at", "summary"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "enum": ["branch", "fix-proposal", "fix-approval", "fix-rejection", "manual-override", "skip"],
+          "description": "Decision category."
+        },
+        "at": { "type": "string", "format": "date-time" },
+        "activity": { "type": "string", "description": "Activity id this decision belongs to, when applicable." },
+        "agent": { "type": "string", "description": "Agent id that made or recorded the decision." },
+        "summary": { "type": "string", "description": "Human-readable summary." },
+        "proposal": { "$ref": "#/$defs/fixProposalRef", "description": "Reference to the fix proposal involved, when kind is fix-proposal / fix-approval / fix-rejection." },
+        "details": { "description": "Free-form structured details." }
+      }
+    },
+    "fixProposalRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "entity": { "type": "string", "description": "Entity id holding the fix proposal value." },
+        "summary": { "type": "string" }
+      }
+    },
+    "eventSummaryDef": {
+      "type": "object",
+      "description": "Compact event log entry. Full envelopes live in implementation-specific event stores.",
+      "required": ["stepId", "type", "timestamp"],
+      "additionalProperties": false,
+      "properties": {
+        "stepId": { "$ref": "common.schema.json#/$defs/localId" },
+        "type": { "$ref": "events.schema.json#/$defs/eventType" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "message": { "type": "string" }
+      }
+    },
+    "checksum": {
+      "type": "object",
+      "description": "File or value digest.",
+      "required": ["algorithm", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": ["sha256", "sha512", "blake3", "md5"],
+          "description": "Digest algorithm. sha256 is RECOMMENDED."
+        },
+        "value": {
+          "type": "string",
+          "description": "Lowercase hex-encoded digest."
+        }
+      }
+    },
+    "bidsEntities": {
+      "type": "object",
+      "description": "BIDS entity key/value pairs from BIDS Common Principles. Validators MAY check that supplied keys are drawn from a known BIDS entity set.",
+      "additionalProperties": { "type": "string" },
+      "propertyNames": {
+        "enum": [
+          "sub", "ses", "task", "acq", "ce", "rec", "dir", "run", "mod", "echo", "flip", "inv", "mt", "part", "proc", "space", "desc", "label", "from", "to", "hemi", "den", "res", "atlas", "split", "chunk"
+        ]
+      }
+    }
+  }
+}

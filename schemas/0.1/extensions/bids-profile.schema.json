@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://niivue.github.io/neuroflow-spec/schemas/0.1/extensions/bids-profile.schema.json",
+  "title": "NeuroFlow Extension: bids/profile",
+  "description": "Reference schema for the bids/profile extension namespace. Describes BIDS-aware tool roles, the BIDS-required-fields knowledge base each detector and fixer relies on, refacing/defacing metadata, and the subject relabeling shape. This is an extension contract, not part of the portable NeuroFlow core, but it pairs with the core fix-proposal pattern defined in §21.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "role": { "$ref": "#/$defs/role" },
+    "modality": { "$ref": "#/$defs/modality" },
+    "requiredFields": { "$ref": "#/$defs/requiredFields" },
+    "recommendedFields": { "$ref": "#/$defs/recommendedFields" },
+    "fillFrom": { "$ref": "#/$defs/fillFrom" },
+    "refacing": { "$ref": "#/$defs/refacing" },
+    "subjectPolicy": { "$ref": "#/$defs/subjectPolicy" },
+    "outputDataset": { "$ref": "#/$defs/outputDataset" }
+  },
+  "$defs": {
+    "role": {
+      "type": "string",
+      "description": "Tool's role in a BIDS-aware workflow. Determines which fix-proposal categories the tool produces or consumes.",
+      "enum": [
+        "converter",
+        "classifier",
+        "validator",
+        "fixer",
+        "writer",
+        "deface-detector",
+        "reface-tool",
+        "subject-relabel-detector",
+        "subject-relabel-fixer",
+        "intendedfor-fixer",
+        "qc"
+      ]
+    },
+    "modality": {
+      "type": "array",
+      "description": "BIDS modalities this tool can handle. Drawn from the BIDS Common Principles datatype list.",
+      "items": {
+        "type": "string",
+        "enum": ["anat", "func", "dwi", "fmap", "perf", "meg", "eeg", "ieeg", "pet", "micr", "motion", "nirs", "mrs"]
+      },
+      "uniqueItems": true
+    },
+    "requiredFields": {
+      "type": "object",
+      "description": "Per-suffix list of JSON sidecar fields the tool treats as required. Keys are BIDS suffixes (e.g. bold, T1w, dwi, magnitude1). Values are arrays of field names. A bids:fix-proposal emitted by this tool MAY reference these field names.",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" },
+        "uniqueItems": true
+      }
+    },
+    "recommendedFields": {
+      "type": "object",
+      "description": "Per-suffix list of recommended-but-not-required sidecar fields. Missing recommended fields raise warn-severity proposals.",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" },
+        "uniqueItems": true
+      }
+    },
+    "fillFrom": {
+      "type": "object",
+      "description": "Provenance sources a fixer may consult to populate missing fields. Keys are BIDS field names; values describe where to look for the value.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": ["dicom", "nifti-header", "context", "operator-input", "computed"],
+            "description": "Provenance class."
+          },
+          "dicomTag": { "type": "string", "description": "DICOM tag in (group,element) hex form, e.g. (0018,0080)." },
+          "contextField": { "type": "string", "description": "Context field identifier when source=context." },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "refacing": {
+      "type": "object",
+      "description": "Refacing / defacing metadata for tools that detect or perform either transformation.",
+      "additionalProperties": false,
+      "properties": {
+        "detect": {
+          "type": "boolean",
+          "description": "Tool detects whether an anat image has been defaced.",
+          "default": false
+        },
+        "operation": {
+          "type": "string",
+          "enum": ["deface", "reface"],
+          "description": "Transformation this tool performs."
+        },
+        "annotationField": {
+          "type": "string",
+          "description": "Sidecar field set by this tool to record the transformation. Conventional: DefacedBy / RefacedBy.",
+          "default": "RefacedBy"
+        }
+      }
+    },
+    "subjectPolicy": {
+      "type": "object",
+      "description": "Subject identifier policy for relabel detectors and fixers.",
+      "additionalProperties": false,
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Regex that valid sub-<id> values must satisfy after relabeling, e.g. ^[A-Za-z0-9]+$."
+        },
+        "rules": {
+          "type": "array",
+          "description": "Ordered rename rules. Each entry replaces match groups in scanner-side ids with the target form.",
+          "items": {
+            "type": "object",
+            "required": ["match"],
+            "additionalProperties": false,
+            "properties": {
+              "match":   { "type": "string", "description": "Regex applied to the scanner-side identifier." },
+              "replace": { "type": "string", "description": "Replacement string, may include capture group refs." },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "outputDataset": {
+      "type": "object",
+      "description": "Configuration for writer tools that emit a BIDS or BIDS-Derivatives dataset.",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["bids", "bids-derivatives"],
+          "default": "bids"
+        },
+        "pipelineName": {
+          "type": "string",
+          "description": "Value to use for GeneratedBy[].Name in dataset_description.json when emitting derivatives."
+        }
+      }
+    }
+  }
+}

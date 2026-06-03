@@ -27,12 +27,14 @@
       "series_list": {
         "type": "core:array<neuro:series-mapping>",
         "description": "Classified series with BIDS datatype, suffix, and metadata.",
-        "heuristic": "bids-classify"
+        "heuristic": "bids-classify",
+        "liveWritable": true
       },
       "subjects": {
         "type": "core:array<neuro:subject>",
         "description": "Detected subjects and sessions grouped by PatientID and AcquisitionDate.",
-        "heuristic": "detect-subjects"
+        "heuristic": "detect-subjects",
+        "liveWritable": true
       },
       "skull_strip_config": {
         "type": "core:object",
@@ -78,6 +80,7 @@
   "steps": {
     "convert": {
       "tool": "niivue.desktop.tools/dcm2niix",
+      "stage": "ingest",
       "inputs": {
         "dicom_dir": {
           "ref": "inputs.dicom_dir"
@@ -98,6 +101,7 @@
     },
     "classify": {
       "tool": "niivue.desktop.tools/bids-classify",
+      "stage": "ingest",
       "inputs": {
         "sidecars": {
           "ref": "steps.convert.outputs.sidecars"
@@ -109,10 +113,18 @@
       "outputMappings": {
         "mappings": "series_list",
         "subjects": "subjects"
+      },
+      "eventBindings": {
+        "transport": "core:stdout-ndjson",
+        "contextWrites": {
+          "series_partial": "series_list",
+          "subjects_partial": "subjects"
+        }
       }
     },
     "write": {
       "tool": "niivue.desktop.tools/bids-write",
+      "stage": "ingest",
       "inputs": {
         "volumes": {
           "ref": "steps.convert.outputs.volumes"
@@ -133,6 +145,7 @@
     },
     "postpass": {
       "tool": "niivue.desktop.tools/bids-postpass",
+      "stage": "ingest",
       "inputs": {
         "bids_dir": {
           "ref": "steps.write.outputs.bids_dir"

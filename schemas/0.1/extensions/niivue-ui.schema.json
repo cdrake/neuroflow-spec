@@ -76,6 +76,10 @@
           "type": "string",
           "enum": ["Import", "Processing", "Quality", "Output"]
         },
+        "stage": {
+          "$ref": "../common.schema.json#/$defs/workflowStage",
+          "description": "Informal, opt-in workflow stage (ingest/explore/publish) this palette entry is grouped under for discovery. Independent of category: stage is where a tool sits in the flow, category is what kind of work it does. See specification Section 27."
+        },
         "icon": { "type": "string", "description": "Radix icon component name." },
         "defaults": {
           "type": "object",

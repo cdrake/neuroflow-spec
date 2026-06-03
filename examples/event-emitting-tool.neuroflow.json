@@ -1,0 +1,77 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "niivue.desktop.tools/bids-classify",
+  "version": "1.1.0",
+  "description": "Classify DICOM sidecars into BIDS series mappings. Streams partial classifications as they are recognized.",
+  "inputs": {
+    "sidecars": {
+      "type": "core:array<core:file>",
+      "description": "BIDS JSON sidecars to classify."
+    },
+    "overrides": {
+      "type": "core:array<neuro:series-mapping>",
+      "description": "User-provided series mapping overrides applied after automatic classification.",
+      "optional": true,
+      "default": []
+    }
+  },
+  "outputs": {
+    "mappings": {
+      "type": "core:array<neuro:series-mapping>",
+      "description": "Final classified series mappings.",
+      "delivery": {
+        "mode": "core:event-stream",
+        "eventName": "mappings_final"
+      }
+    },
+    "subjects": {
+      "type": "core:array<neuro:subject>",
+      "description": "Detected subjects and sessions.",
+      "delivery": {
+        "mode": "core:result-file"
+      }
+    }
+  },
+  "outputDelivery": {
+    "default": "core:result-file"
+  },
+  "events": {
+    "transports": ["core:stdout-ndjson", "core:event-file", "core:unix-socket"],
+    "emits": {
+      "progress": {
+        "type": "core:progress",
+        "description": "Per-sidecar classification progress."
+      },
+      "log": {
+        "type": "core:log",
+        "description": "Free-text diagnostics from the classifier."
+      },
+      "status": {
+        "type": "core:status",
+        "description": "Lifecycle state changes."
+      },
+      "series_partial": {
+        "type": "core:context-write",
+        "description": "Streams classified series mappings as they are recognized.",
+        "valueType": "core:array<neuro:series-mapping>"
+      },
+      "subjects_partial": {
+        "type": "core:context-write",
+        "description": "Streams detected subjects as they are recognized.",
+        "valueType": "core:array<neuro:subject>"
+      },
+      "mappings_final": {
+        "type": "core:output-final",
+        "description": "Final mappings output, delivered as an event instead of by result collection.",
+        "valueType": "core:array<neuro:series-mapping>"
+      }
+    }
+  },
+  "extensions": {
+    "bids/profile": {
+      "role": "classifier",
+      "modality": ["anat", "func", "dwi", "fmap"]
+    }
+  }
+}
