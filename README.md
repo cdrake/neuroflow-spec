@@ -45,6 +45,8 @@ Status: pre-1.0 draft, created 2026-05-20.
   historical notes on the original NiiVue Desktop model and its mapping.
 - [examples/](examples/): valid example documents, plus `examples/invalid/`
   cases that a conforming validator must reject.
+  `examples/invalid-extensions/` holds core-valid documents whose
+  extension metadata an extension-aware validator must reject.
 - [tests/validate.mjs](tests/validate.mjs): conformance harness. Run with
   `npm install && npm test`.
 
@@ -116,8 +118,9 @@ The schema-backed 0.1 draft is in place:
   directory, event stream, fixed path, and exit code; tool-level
   defaults and per-output overrides; and `NEUROFLOW_OUTPUT_*` channel
   discovery.
-- Reference extension schemas for the `niivue/ui`, `niivue/runtime`, and
-  `bids/profile` namespaces.
+- Reference extension schemas for the `niivue/ui`, `niivue/runtime`,
+  `bids/profile`, and `neurovue` namespaces, plus the provisional
+  `neuroflow/mcp` namespace from RFC 0009.
 - A conformance harness with valid and invalid example documents.
 
 NiiVue Desktop is the reference implementation: it vendors these schemas and

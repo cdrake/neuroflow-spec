@@ -30,6 +30,7 @@ const schemaFiles = [
   'extensions/niivue-runtime.schema.json',
   'extensions/bids-profile.schema.json',
   'extensions/neurovue.schema.json',
+  'extensions/neuroflow-mcp.schema.json',
   'extensions/registry.schema.json'
 ]
 for (const rel of schemaFiles) {
@@ -111,6 +112,82 @@ if (existsSync(registryPath)) {
   }
 } else {
   report(false, 'extensions/registry.json present', 'registry.json not found')
+}
+
+// Extension-aware checks (spec section 28.3). Document-level extension blocks
+// are validated against the registered schema of their namespace when that
+// schema describes an extension-metadata object (root "type": "object").
+// Extension-type schemas (such as neurovue) only define $defs and are skipped.
+const registryDoc = existsSync(registryPath)
+  ? JSON.parse(readFileSync(registryPath, 'utf8'))
+  : { extensions: [] }
+const metadataValidators = {}
+for (const entry of registryDoc.extensions ?? []) {
+  const schemaPath = join(extDir, entry.schema)
+  if (!existsSync(schemaPath)) continue
+  const schema = JSON.parse(readFileSync(schemaPath, 'utf8'))
+  if (schema.type !== 'object') continue
+  const validate = ajv.getSchema(schema.$id)
+  if (validate) metadataValidators[entry.namespace] = validate
+}
+
+// Semantic rules JSON Schema cannot express, keyed by namespace.
+const semanticChecks = {
+  // RFC 0009 section 10: app.requiredOutputs must name declared tool outputs.
+  'neuroflow/mcp': (block, doc) => {
+    const errors = []
+    const required = block?.app?.requiredOutputs ?? []
+    const declared = Object.keys(doc.outputs ?? {})
+    for (const name of required) {
+      if (!declared.includes(name)) {
+        errors.push(`app.requiredOutputs: '${name}' is not a declared output (declared: ${declared.join(', ') || 'none'})`)
+      }
+    }
+    return errors
+  }
+}
+
+const checkExtensions = (doc) => {
+  const errors = []
+  for (const [ns, block] of Object.entries(doc.extensions ?? {})) {
+    const validate = metadataValidators[ns]
+    if (validate && !validate(block)) {
+      errors.push(`${ns}: ` + ajv.errorsText(validate.errors, { separator: '; ' }))
+    }
+    if (semanticChecks[ns]) {
+      errors.push(...semanticChecks[ns](block, doc).map((e) => `${ns}: ${e}`))
+    }
+  }
+  return errors
+}
+
+console.log('\nExtension metadata in valid examples (expect pass):')
+for (const name of readdirSync(examplesDir)) {
+  if (!name.endsWith('.json')) continue
+  const doc = JSON.parse(readFileSync(join(examplesDir, name), 'utf8'))
+  const namespaces = Object.keys(doc.extensions ?? {}).filter(
+    (ns) => metadataValidators[ns] || semanticChecks[ns]
+  )
+  if (namespaces.length === 0) continue
+  const errors = checkExtensions(doc)
+  report(errors.length === 0, `${name} [${namespaces.join(', ')}]`, errors.join('\n        '))
+}
+
+console.log('\nInvalid extension metadata (expect rejection):')
+const invalidExtDir = join(examplesDir, 'invalid-extensions')
+if (existsSync(invalidExtDir)) {
+  for (const name of readdirSync(invalidExtDir)) {
+    if (!name.endsWith('.json')) continue
+    const doc = JSON.parse(readFileSync(join(invalidExtDir, name), 'utf8'))
+    // The core document must stay valid: extensions never change core validity.
+    const validate = validatorFor(doc)
+    const coreOk = validate ? validate(doc) : false
+    report(coreOk, `${name} is core-valid`,
+      coreOk ? '' : ajv.errorsText(validate?.errors, { separator: '\n        ' }))
+    const errors = checkExtensions(doc)
+    report(errors.length > 0, `${name} extension block rejected`,
+      errors.length > 0 ? '' : 'extension block was accepted but should have been rejected')
+  }
 }
 
 console.log('')

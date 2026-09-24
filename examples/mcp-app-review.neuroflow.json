@@ -1,0 +1,47 @@
+{
+  "$schema": "../schemas/0.1/tool.schema.json",
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.examples/neurovue-mcp-review",
+  "version": "1.0.0",
+  "description": "Interactive NeuroVue review exposed as an MCP App (RFC 0009 section 6). The host renders the app inline; it streams volumes from the runtime's loopback artifact endpoint and submits a correction patch. The patch is passed inline as a JSON value via valueTypes.",
+  "inputs": {
+    "volumes": {
+      "type": "core:array<neuro:volume>",
+      "description": "Volumes to review."
+    },
+    "overlay": {
+      "type": "neuro:label-map",
+      "description": "Optional segmentation shown over the volumes.",
+      "optional": true
+    }
+  },
+  "outputs": {
+    "correction_patch": {
+      "type": "neurovue:correction-patch",
+      "description": "Review-time corrections written by NeuroVue.",
+      "delivery": { "mode": "core:result-file", "path": "correction.patch.json" }
+    },
+    "review_state": {
+      "type": "core:json",
+      "description": "Optional saved viewer state.",
+      "optional": true
+    }
+  },
+  "outputDelivery": {
+    "default": "core:result-file"
+  },
+  "extensions": {
+    "neuroflow/mcp": {
+      "name": "neurovue.review",
+      "title": "Review volumes in NeuroVue",
+      "valueTypes": ["neurovue:correction-patch"],
+      "app": {
+        "resourceUri": "ui://neurovue/review",
+        "connectDomains": ["http://127.0.0.1:7878"],
+        "resourceDomains": ["https://cdn.jsdelivr.net"],
+        "requiredOutputs": ["correction_patch"]
+      }
+    }
+  }
+}

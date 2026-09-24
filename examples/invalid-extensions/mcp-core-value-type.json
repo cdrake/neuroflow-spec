@@ -1,0 +1,58 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.examples/skull-strip",
+  "version": "1.0.0",
+  "description": "Invalid: valueTypes may only list extension types, not closed core types.",
+  "inputs": {
+    "t1": {
+      "type": "neuro:volume",
+      "description": "T1-weighted anatomical volume."
+    },
+    "threshold": {
+      "type": "core:number",
+      "description": "Fractional intensity threshold; smaller values give larger brain estimates.",
+      "optional": true,
+      "default": 0.5,
+      "min": 0,
+      "max": 1
+    }
+  },
+  "outputs": {
+    "brain_volume": {
+      "type": "neuro:volume",
+      "description": "Skull-stripped T1 volume.",
+      "delivery": {
+        "mode": "core:result-dir",
+        "path": "brain.nii.gz"
+      }
+    },
+    "brain_mask": {
+      "type": "neuro:mask",
+      "description": "Binary brain mask.",
+      "delivery": {
+        "mode": "core:result-dir",
+        "path": "brain_mask.nii.gz"
+      }
+    }
+  },
+  "outputDelivery": {
+    "default": "core:result-dir"
+  },
+  "extensions": {
+    "neuroflow/mcp": {
+      "title": "Skull strip (brain extraction)",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "maxWaitMs": 120000,
+      "valueTypes": [
+        "neuro:qc-metrics"
+      ]
+    }
+  },
+  "$schema": "../../schemas/0.1/tool.schema.json"
+}

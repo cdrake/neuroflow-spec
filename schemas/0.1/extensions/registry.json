@@ -44,6 +44,16 @@
       "addedIn": "0.1.0",
       "reservedTypes": ["neurovue:correction-patch"],
       "description": "Viewer-specific review artifacts produced by NeuroVue, including the correction-patch type."
+    },
+    {
+      "namespace": "neuroflow/mcp",
+      "title": "NeuroFlow MCP binding",
+      "status": "provisional",
+      "maintainer": "NeuroFlow",
+      "contact": "https://github.com/niivue/neuroflow-spec",
+      "schema": "neuroflow-mcp.schema.json",
+      "addedIn": "0.1.0",
+      "description": "Per-document metadata for exposing tools and workflows to AI agents through a NeuroFlow MCP server: tool naming, annotations, wait budget, value types, and MCP App declarations. See RFC 0009."
     }
   ]
 }
