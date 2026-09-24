@@ -37,6 +37,10 @@ Status: pre-1.0 draft, created 2026-05-20.
   vocabulary (stdout-json, result-file, result-dir, event-stream,
   fixed-path, exit-code), tool-level defaults with per-output overrides,
   and `NEUROFLOW_OUTPUT_*` channel discovery.
+- [rfcs/0009-mcp-binding.md](rfcs/0009-mcp-binding.md): proposed RFC
+  for exposing a NeuroFlow runtime to AI agents over the Model Context
+  Protocol: tools and workflows as MCP tools, runs as tasks, approvals as
+  input requests, artifacts as resources, and `uiApp` tools as MCP Apps.
 - [docs/niivue-desktop-source-model.md](docs/niivue-desktop-source-model.md):
   historical notes on the original NiiVue Desktop model and its mapping.
 - [examples/](examples/): valid example documents, plus `examples/invalid/`
