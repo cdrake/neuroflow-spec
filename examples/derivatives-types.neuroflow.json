@@ -1,0 +1,59 @@
+{
+  "$schema": "../schemas/0.1/tool.schema.json",
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.examples/derivatives-types",
+  "version": "1.0.0",
+  "description": "Coverage example exercising the common pipeline types added to the closed vocabulary: statmap, probseg, cifti, gradient-table, connectivity-matrix, qc-metrics, report, and core:tabular.",
+  "inputs": {
+    "bold": {
+      "type": "neuro:volume",
+      "description": "Preprocessed BOLD volume."
+    },
+    "gradients": {
+      "type": "neuro:gradient-table",
+      "description": "DWI gradient scheme (bvals/bvecs).",
+      "optional": true
+    }
+  },
+  "outputs": {
+    "stat": {
+      "type": "neuro:statmap",
+      "description": "GLM statistical map.",
+      "delivery": { "mode": "core:result-file", "path": "stat.nii.gz" }
+    },
+    "tissue": {
+      "type": "core:array<neuro:probseg>",
+      "description": "Tissue probability maps (GM/WM/CSF).",
+      "delivery": { "mode": "core:result-dir", "path": "probseg" }
+    },
+    "dense": {
+      "type": "neuro:cifti",
+      "description": "CIFTI dense timeseries.",
+      "optional": true,
+      "delivery": { "mode": "core:result-file", "path": "bold.dtseries.nii" }
+    },
+    "connectome": {
+      "type": "neuro:connectivity-matrix",
+      "description": "Functional connectivity matrix.",
+      "optional": true,
+      "delivery": { "mode": "core:result-file", "path": "connectome.tsv" }
+    },
+    "confounds": {
+      "type": "core:tabular",
+      "description": "Confound/regressor table.",
+      "delivery": { "mode": "core:result-file", "path": "confounds.tsv" }
+    },
+    "iqms": {
+      "type": "neuro:qc-metrics",
+      "description": "Image-quality metrics.",
+      "delivery": { "mode": "core:result-file", "path": "qc.json" }
+    },
+    "report": {
+      "type": "neuro:report",
+      "description": "Rendered QA report.",
+      "delivery": { "mode": "core:result-file", "path": "report.html" }
+    }
+  },
+  "outputDelivery": { "default": "core:result-file" }
+}

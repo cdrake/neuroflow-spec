@@ -1,0 +1,49 @@
+{
+  "$schema": "./registry.schema.json",
+  "neuroflow": "0.1.0",
+  "kind": "extension-registry",
+  "description": "Registered NeuroFlow extension namespaces. To register a new namespace, open a pull request to neuroflow-spec adding its schema file here and an entry below; maintainers act as registrar (cf. the NIfTI extension-code registry). See specification Section 28 and extensions/README.md.",
+  "extensions": [
+    {
+      "namespace": "niivue/ui",
+      "title": "NiiVue designer UI metadata",
+      "status": "registered",
+      "maintainer": "NiiVue Desktop",
+      "contact": "https://github.com/niivue/niivue",
+      "schema": "niivue-ui.schema.json",
+      "addedIn": "0.1.0",
+      "description": "Designer-palette block, menu, form, and workflow-stage metadata for tools and workflows."
+    },
+    {
+      "namespace": "niivue/runtime",
+      "title": "NiiVue declarative CLI execution",
+      "status": "registered",
+      "maintainer": "NiiVue Desktop",
+      "contact": "https://github.com/niivue/niivue",
+      "schema": "niivue-runtime.schema.json",
+      "addedIn": "0.1.0",
+      "description": "Declarative command-line execution (exec) metadata for console tools."
+    },
+    {
+      "namespace": "bids/profile",
+      "title": "BIDS role and modality profile",
+      "status": "registered",
+      "maintainer": "NeuroFlow",
+      "contact": "https://github.com/niivue/neuroflow-spec",
+      "schema": "bids-profile.schema.json",
+      "addedIn": "0.1.0",
+      "description": "Declares BIDS-App role and modality coverage for a tool or workflow."
+    },
+    {
+      "namespace": "neurovue",
+      "title": "NeuroVue review artifacts",
+      "status": "registered",
+      "maintainer": "NeuroVue",
+      "contact": "https://github.com/niivue/neurovue",
+      "schema": "neurovue.schema.json",
+      "addedIn": "0.1.0",
+      "reservedTypes": ["neurovue:correction-patch"],
+      "description": "Viewer-specific review artifacts produced by NeuroVue, including the correction-patch type."
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://niivue.github.io/neuroflow-spec/schemas/0.1/extensions/registry.schema.json",
+  "title": "NeuroFlow Extension Registry",
+  "description": "Authoritative list of registered NeuroFlow extension namespaces. New entries are added by pull request to neuroflow-spec; the project maintainers act as registrar (cf. the NIfTI extension-code registry). See specification Section 28.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["neuroflow", "kind", "extensions"],
+  "properties": {
+    "$schema": { "type": "string", "description": "JSON Schema reference for editor support." },
+    "neuroflow": { "$ref": "../common.schema.json#/$defs/specVersion" },
+    "kind": { "const": "extension-registry" },
+    "description": { "type": "string" },
+    "extensions": {
+      "type": "array",
+      "description": "Registered extension namespaces.",
+      "items": { "$ref": "#/$defs/registryEntry" }
+    }
+  },
+  "$defs": {
+    "registryEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["namespace", "title", "status", "maintainer", "contact", "schema", "addedIn", "description"],
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "description": "The registered namespace. For extension-object metadata this is the extensions{} key (e.g. \"niivue/ui\"); for extension types this is the type namespace root (e.g. \"neurovue\").",
+          "pattern": "^[a-z][a-z0-9.-]*(/[a-z][a-z0-9.-]*)*$"
+        },
+        "title": { "type": "string", "description": "Human-readable name." },
+        "status": {
+          "type": "string",
+          "description": "Lifecycle of the registration.",
+          "enum": ["provisional", "registered", "deprecated"]
+        },
+        "maintainer": { "type": "string", "description": "Owning project or person responsible for the namespace." },
+        "contact": { "type": "string", "description": "URL or email for the maintainer." },
+        "schema": {
+          "type": "string",
+          "description": "Filename of the JSON Schema for this namespace, relative to schemas/0.1/extensions/.",
+          "pattern": "^[a-z0-9][a-z0-9.-]*\\.schema\\.json$"
+        },
+        "addedIn": { "$ref": "../common.schema.json#/$defs/specVersion" },
+        "reservedTypes": {
+          "type": "array",
+          "description": "Extension type strings (namespace:name) this namespace defines and reserves.",
+          "items": { "$ref": "../common.schema.json#/$defs/extensionType" }
+        },
+        "description": { "type": "string", "description": "What the extension covers." }
+      }
+    }
+  }
+}

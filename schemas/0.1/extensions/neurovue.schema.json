@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://niivue.github.io/neuroflow-spec/schemas/0.1/extensions/neurovue.schema.json",
+  "title": "NeuroFlow Extension: neurovue",
+  "description": "Registered schema for the neurovue extension namespace. Defines the value shape of the neurovue:correction-patch type produced by the NeuroVue review app. This is an extension contract, not part of the portable NeuroFlow core.",
+  "$defs": {
+    "correction-patch": {
+      "type": "object",
+      "description": "Value shape for the neurovue:correction-patch type: a small artifact describing review-time corrections written by NeuroVue.",
+      "required": ["neurovue"],
+      "additionalProperties": true,
+      "properties": {
+        "neurovue": {
+          "type": "string",
+          "description": "NeuroVue patch format version.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "asset": {
+          "type": "object",
+          "description": "The reviewed asset the corrections apply to.",
+          "properties": {
+            "id": { "type": "string" },
+            "type": { "type": "string" },
+            "manifest": { "type": "string" }
+          }
+        },
+        "backend": {
+          "type": "string",
+          "description": "Renderer backend used during review.",
+          "enum": ["webgl2", "webgpu"]
+        },
+        "clipPlanes": {
+          "type": "array",
+          "description": "Enabled clip planes captured at save time.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "depth": { "type": "number" },
+              "azimuth": { "type": "number" },
+              "elevation": { "type": "number" },
+              "opacity": { "type": "number" }
+            }
+          }
+        },
+        "savedAt": {
+          "type": "string",
+          "description": "ISO-8601 timestamp when the patch was saved."
+        }
+      }
+    }
+  }
+}

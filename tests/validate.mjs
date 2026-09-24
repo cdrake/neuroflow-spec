@@ -28,7 +28,9 @@ const schemaFiles = [
   'provenance.schema.json',
   'extensions/niivue-ui.schema.json',
   'extensions/niivue-runtime.schema.json',
-  'extensions/bids-profile.schema.json'
+  'extensions/bids-profile.schema.json',
+  'extensions/neurovue.schema.json',
+  'extensions/registry.schema.json'
 ]
 for (const rel of schemaFiles) {
   const schema = JSON.parse(readFileSync(join(schemaDir, rel), 'utf8'))
@@ -82,6 +84,33 @@ if (existsSync(invalidDir)) {
     // A correct outcome here is rejection.
     report(!ok, name, ok ? 'document was accepted but should have been rejected' : '')
   }
+}
+
+console.log('\nExtension registry:')
+const extDir = join(schemaDir, 'extensions')
+const registryPath = join(extDir, 'registry.json')
+if (existsSync(registryPath)) {
+  const registry = JSON.parse(readFileSync(registryPath, 'utf8'))
+  const validateRegistry = ajv.getSchema(base + 'extensions/registry.schema.json')
+  const ok = validateRegistry(registry)
+  report(ok, 'registry.json conforms to registry.schema.json',
+    ok ? '' : ajv.errorsText(validateRegistry.errors, { separator: '\n        ' }))
+  for (const entry of registry.extensions ?? []) {
+    const schemaPath = join(extDir, entry.schema)
+    const present = existsSync(schemaPath)
+    report(present, `${entry.namespace} -> ${entry.schema} exists`,
+      present ? '' : `referenced schema file is missing: ${entry.schema}`)
+    if (present) {
+      try {
+        JSON.parse(readFileSync(schemaPath, 'utf8'))
+        report(true, `${entry.schema} parses`)
+      } catch (err) {
+        report(false, `${entry.schema} parses`, String(err))
+      }
+    }
+  }
+} else {
+  report(false, 'extensions/registry.json present', 'registry.json not found')
 }
 
 console.log('')

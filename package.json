@@ -5,9 +5,14 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "node tests/validate.mjs"
+    "test": "node tests/validate.mjs",
+    "slides": "marp --server docs",
+    "slides:watch": "marp --watch --preview docs/neuroflow-spec.slides.md",
+    "slides:html": "marp docs/neuroflow-spec.slides.md --html -o docs/neuroflow-spec.slides.html",
+    "slides:pdf": "marp docs/neuroflow-spec.slides.md --pdf --allow-local-files -o docs/neuroflow-spec.slides.pdf"
   },
   "devDependencies": {
+    "@marp-team/marp-cli": "^4.1.2",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1"
   }

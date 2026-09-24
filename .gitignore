@@ -1,3 +1,7 @@
 node_modules/
 package-lock.json
 .DS_Store
+
+# Generated slide output (source is docs/*.slides.md)
+docs/*.slides.html
+docs/*.slides.pdf

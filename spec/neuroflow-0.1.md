@@ -93,6 +93,36 @@ The neuro layer defines neuroimaging types:
 - `neuro:tract`
 - `neuro:ome-zarr`
 - `neuro:ngff-zarr`
+- `neuro:statmap`
+- `neuro:probseg`
+- `neuro:cifti`
+- `neuro:gradient-table`
+- `neuro:connectivity-matrix`
+- `neuro:qc-metrics`
+- `neuro:report`
+
+These cover the artifacts current neuroimaging pipelines routinely exchange:
+
+- `neuro:statmap` — a statistical or parametric map (e.g. z, t, F, beta, or
+  effect-size), as produced by GLM, qMRI, or group analyses. Distinct from a raw
+  intensity `neuro:volume`.
+- `neuro:probseg` — a probabilistic segmentation: values in `[0, 1]` per
+  structure (e.g. GM/WM/CSF tissue-probability maps from fMRIPrep/ANTs), one
+  frame per structure. The discrete-segmentation counterpart is `neuro:label-map`.
+- `neuro:cifti` — CIFTI grayordinate data combining surface vertices and
+  subcortical voxels (`dscalar`/`dtseries`/`dlabel`), as used by HCP and fMRIPrep.
+- `neuro:gradient-table` — a diffusion gradient scheme (b-values and b-vectors)
+  accompanying DWI data (e.g. for QSIPrep).
+- `neuro:connectivity-matrix` — a structural or functional connectivity matrix
+  over a parcellation (the BIDS-Connectivity family).
+- `neuro:qc-metrics` — image-quality metrics for a scan or dataset (e.g. MRIQC
+  IQMs), structured for aggregation.
+- `neuro:report` — a rendered QA/QC or processing report (HTML or PDF) for human
+  review.
+
+Generic tabular data uses the `core:tabular` primitive (§7): rows-and-columns
+TSV/CSV such as confounds, motion regressors, or tractometry tables. BIDS-shaped
+tables keep their specific `bids:` types.
 
 `neuro:surface` is an anatomical surface mesh (e.g. a cortical surface);
 `neuro:tract` is tractography streamlines (e.g. `.trk`/`.tck`). They are distinct
@@ -212,6 +242,8 @@ The `core` namespace is reserved for primitive and container types:
 - `core:array`
 - `core:file`
 - `core:directory`
+- `core:tabular` — rows-and-columns tabular data (TSV/CSV), the generic
+  substrate for confounds, regressors, and other pipeline tables.
 
 The `neuro` namespace is reserved for the neuroimaging types listed in
 section 4.
@@ -798,7 +830,8 @@ the core schemas:
 - [`schemas/0.1/extensions/niivue-runtime.schema.json`](../schemas/0.1/extensions/niivue-runtime.schema.json)
   — declarative CLI `exec` metadata.
 
-Open issue: later drafts should define a `requiredExtensions` mechanism.
+Extension namespaces are governed by the extension registry (§28), which also
+defines `requiredExtensions` and validator conformance levels.
 
 ## 19. Execution Semantics
 
@@ -1479,11 +1512,8 @@ standards rather than replace them.
 - Nullable and optional output semantics.
 - Reference paths into arrays and structured objects.
 - Explicit step dependencies versus object-order execution.
-- Type registry governance.
 - BIDS entity modeling.
 - Provenance model and relationship to W3C PROV or RO-Crate.
-- Runtime adapter extension shape beyond the `niivue/runtime` profile.
-- Required extension declarations.
 - Whether and how heuristics should be re-evaluated when a live `core:context-write`
   changes one of their `dependsOn` fields.
 - Back-pressure and rate-limit semantics for high-volume event streams.
@@ -1589,3 +1619,87 @@ intentionally leaves unused:
   artifact.
 
 None of these are defined here; the tag only leaves the door open.
+
+## 28. Extension Registry
+
+NeuroFlow is an open, extensible standard. The core type vocabulary (`core:`,
+`neuro:`, `bids:`, `prov:`) is deliberately small and closed (§7), and covers
+the artifacts common neuroimaging pipelines exchange today. Everything
+application- or domain-specific is expressed through **extensions**: extension
+types (`namespace:name`, §7) and extension metadata (`extensions["namespace"]`,
+§18). This section defines how those namespaces are governed.
+
+### 28.1 Open by default, registered by review
+
+Any namespace other than the four closed core namespaces is a legal extension. A
+conforming tool MUST accept it, MUST NOT attempt to interpret it, and MUST
+preserve it unchanged (§7, §18). This keeps the standard open: an application can
+ship a new type or metadata block without waiting for anyone.
+
+A namespace becomes **registered** when its schema is merged into the
+neuroflow-spec extension registry. Registration is by pull request, and the
+neuroflow-spec maintainers act as the **registrar**. This is the same model the
+NIH uses for NIfTI header extension codes: anyone may use an extension, but the
+namespaces and their meanings are recorded centrally so the ecosystem stays
+interoperable.
+
+The registry lives at `schemas/0.1/extensions/`:
+
+- `registry.json` — the authoritative list of registered namespaces, each with a
+  maintainer, contact, status, schema file, and optional reserved types.
+- `registry.schema.json` — validates `registry.json`.
+- `<namespace>.schema.json` — one JSON Schema per registered namespace.
+
+The registration process and PR checklist are documented in
+`schemas/0.1/extensions/README.md`.
+
+### 28.2 Registered namespace lifecycle
+
+A registry entry has a `status`:
+
+- `provisional` — submitted and merged for use, schema may still change.
+- `registered` — stable; changing its meaning is a breaking change.
+- `deprecated` — retained for compatibility; SHOULD NOT be used in new documents.
+
+A registered namespace MUST NOT be removed or repurposed; deprecate it instead.
+Adding a new registered namespace or a new reserved type to an existing one is
+non-breaking (§24).
+
+### 28.3 Validator conformance
+
+A validator declares one of two conformance levels:
+
+- **Core-conformant** — validates the closed core vocabulary and document
+  structure, and treats every extension namespace as opaque: it MUST preserve
+  extensions and MUST NOT fail validation because of an unknown or unregistered
+  extension. This is the minimum bar and the default.
+- **Extension-aware** — additionally resolves registered namespaces against the
+  registry and MAY validate extension metadata objects and extension-type values
+  against their registered `<namespace>.schema.json`. An extension-aware
+  validator MAY report a registered-schema mismatch, but a mismatch in an
+  extension MUST NOT change the document's core validity.
+
+Unregistered extensions are never validated, only preserved. There is no mode in
+which an unknown extension makes a document non-conformant; that is what keeps
+NeuroFlow open.
+
+### 28.4 Requiring an extension
+
+A document MAY declare that a runtime must understand specific namespaces to
+execute it, via a `requiredExtensions` array in the document `extensions` block:
+
+```json
+{
+  "extensions": {
+    "neuroflow/core": { "requiredExtensions": ["neurovue", "niivue/runtime"] }
+  }
+}
+```
+
+A runtime that does not understand every listed namespace MUST refuse to execute
+the document rather than silently ignoring required behavior. `requiredExtensions`
+does not affect static validation: a core-conformant validator still validates
+and preserves the document; the obligation is on the executing runtime. Listing a
+namespace in `requiredExtensions` does not require it to be registered, but
+registration is strongly recommended for anything a runtime is required to
+understand.
