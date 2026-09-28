@@ -129,3 +129,9 @@ migrates its workflow JSON to the normalized shape.
 Next: semantic validation rules beyond JSON Schema (reference resolution,
 dependency cycles, type compatibility, event-binding and fix-loop validity),
 and follow-up RFCs for the open issues listed in the specification.
+
+## License
+
+Licensed under either of the [Apache License, Version 2.0](LICENSE-APACHE) or the
+[MIT license](LICENSE-MIT), at your option. Contributions are accepted under the
+same terms.

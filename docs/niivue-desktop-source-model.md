@@ -7,7 +7,7 @@ existed when NeuroFlow was extracted. NeuroFlow 0.1 defines only the normalized
 model; this file is kept as the origin record and migration reference. It does
 not describe a supported document profile.
 
-Inspected source: `/Users/chrisdrake/Dev/niivue/niivue/packages/niivue-desktop/workflows`
+Inspected source: `packages/niivue-desktop/workflows` in the [niivue/niivue](https://github.com/niivue/niivue) monorepo
 
 Repository remote: `https://github.com/niivue/niivue.git`
 
