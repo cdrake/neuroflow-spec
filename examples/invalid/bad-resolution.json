@@ -1,0 +1,15 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-resolution",
+  "version": "1.0.0",
+  "description": "A resolution on a surface type (RFC 0010).",
+  "inputs": {
+    "value": {
+      "type": "neuro:surface",
+      "description": "Test input.",
+      "resolution": 1
+    }
+  },
+  "outputs": {}
+}

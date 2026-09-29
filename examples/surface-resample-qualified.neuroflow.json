@@ -1,0 +1,39 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.examples/surface-resample",
+  "version": "1.0.0",
+  "description": "Resample a subject's cortical surface data onto the fsLR 32k mesh. Exercises the RFC 0010 density qualifier on surfaces and CIFTI, and the embedded label system on a dlabel output.",
+  "inputs": {
+    "surface": {
+      "type": "neuro:surface",
+      "description": "The subject's white surface, one hemisphere.",
+      "formats": ["gifti", "freesurfer-surface"],
+      "space": "fsnative"
+    },
+    "labels": {
+      "type": "core:array<neuro:label-map>",
+      "description": "Per-hemisphere parcellations to carry along.",
+      "formats": ["freesurfer-annot", "cifti-dlabel"],
+      "labelSystem": "embedded"
+    }
+  },
+  "outputs": {
+    "resampled": {
+      "type": "neuro:surface",
+      "description": "The surface on the fsLR 32k mesh.",
+      "formats": ["gifti"],
+      "space": "fsLR",
+      "density": "32k",
+      "delivery": { "mode": "core:result-dir", "path": "surface.32k_fs_LR.surf.gii" }
+    },
+    "dlabel": {
+      "type": "neuro:cifti",
+      "description": "The parcellations as one dense label file with its table embedded.",
+      "formats": ["cifti-dlabel"],
+      "space": "fsLR",
+      "density": "32k",
+      "delivery": { "mode": "core:result-dir", "path": "parcellation.32k_fs_LR.dlabel.nii" }
+    }
+  }
+}

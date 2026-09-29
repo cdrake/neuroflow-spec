@@ -356,6 +356,12 @@ label system is a specific integer-to-name table, not a naming scheme.
 
 ## 4. What the survey changes about RFC 0010
 
+The recommendations below are applied in the current RFC revision,
+with one addition from review: a value that no registry or BIDS list
+names carries a vendor prefix (`afni:MNI_ANAT`, `neurodesk:subject-1mm`)
+rather than a bare literal, so that package-specific names stay
+unambiguous and cannot collide with tokens registered later.
+
 **Confirmed as proposed.**
 
 - Short registered tokens rather than media types or IRIs. No standard

@@ -42,9 +42,11 @@ Status: pre-1.0 draft, created 2026-05-20.
   Protocol: tools and workflows as MCP tools, runs as tasks, approvals as
   input requests, artifacts as resources, and `uiApp` tools as MCP Apps.
 - [rfcs/0010-type-qualifiers.md](rfcs/0010-type-qualifiers.md): proposed RFC
-  adding the `formats`, `space`, and `labelSystem` qualifiers to type
-  declarations, with binding compatibility rules, adopted from the
-  Neurodesk Webapps `automation.json` contracts.
+  adding the `formats`, `space`, `resolution`, `density`, and
+  `labelSystem` qualifiers to type declarations, with a format token
+  registry, BIDS space labels, vendor prefixes, `inputs.<id>` inheritance
+  and binding compatibility rules; adopted from the Neurodesk Webapps
+  `automation.json` contracts and revised after the survey below.
 - [docs/type-qualifiers-survey.md](docs/type-qualifiers-survey.md): survey
   of how workflow languages (CWL, Galaxy, Boutiques, Pydra), vocabularies
   (BIDS, TemplateFlow, EDAM, NIDM, DICOM) and packages (AFNI, SPM, FSL,
@@ -128,10 +130,12 @@ The schema-backed 0.1 draft is in place:
   directory, event stream, fixed path, and exit code; tool-level
   defaults and per-output overrides; and `NEUROFLOW_OUTPUT_*` channel
   discovery.
-- Type qualifiers (RFC 0010): `formats`, `space`, and `labelSystem` on any
-  type declaration, so a validator can reject a NIfTI-only tool bound to
-  an MGZ output, a native-space label map bound to a template-space
-  consumer, or two label maps with different lookup tables.
+- Type qualifiers (RFC 0010): `formats`, `space`, `resolution`, `density`,
+  and `labelSystem` on any type declaration, so a validator can reject a
+  NIfTI-only tool bound to an MGZ output, a gzip-compressed NIfTI bound
+  to SPM, a native-space label map bound to a template-space consumer,
+  a 1 mm grid bound to an acquisition-grid consumer, or two label maps
+  with different integer tables.
 - Reference extension schemas for the `niivue/ui`, `niivue/runtime`,
   `bids/profile`, and `neurovue` namespaces, plus the provisional
   `neuroflow/mcp` namespace from RFC 0009.

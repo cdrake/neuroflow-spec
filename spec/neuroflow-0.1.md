@@ -292,7 +292,7 @@ Array values use the container form `core:array<element-type>`, for example
 
 Type declarations MAY include `description`, `optional`, `default`, `enum`,
 `min`, `max`, `label`, `extensions`, and the type qualifiers `formats`,
-`space`, and `labelSystem`.
+`space`, `resolution`, `density`, and `labelSystem`.
 
 ### 7.1 Type Qualifiers
 
@@ -303,53 +303,98 @@ declarations and planners can insert a conversion between them (RFC 0010).
 ```json
 {
   "type": "neuro:label-map",
-  "description": "Whole-brain segmentation.",
-  "formats": ["nifti"],
+  "description": "Whole-brain segmentation on a 1 mm grid.",
+  "formats": ["nii-gz"],
   "space": "inputs.image",
+  "resolution": 1,
   "labelSystem": "freesurfer"
 }
 ```
 
-- `formats` — array of lowercase tokens (`^[a-z][a-z0-9-]*$`), non-empty,
-  no duplicates. On an input, the formats the tool accepts; on an output,
-  the formats it may produce. Registered tokens: `nifti` (plain or gzip),
-  `mgz`, `nrrd`, `minc`, `analyze`, `dicom`, `gifti`, `freesurfer-surface`,
-  `cifti`, `trk`, `tck`, `ome-zarr`, `bval-bvec`, `fsl-mat`,
-  `itk-transform`, `lta`, `json`, `tsv`, `csv`. Unregistered tokens are
-  accepted and compared literally. When `formats` is absent, the value is
-  in the format conventional for its type.
+- `formats` — array of format tokens, non-empty, no duplicates. On an
+  input, the formats the tool accepts; on an output, the formats it may
+  produce. Tokens form a two-level hierarchy: `nii`, `nii-gz` and
+  `nii-pair` are children of `nifti`; `seg-nrrd` of `nrrd`; the
+  `cifti-*` intents of `cifti`; `dicom-seg` of `dicom`; `dseg-tsv` of
+  `tsv`. Other registered tokens include `analyze`, `mgz`, `minc`, `mha`,
+  `mif`, `brik-head`, `ecat`, `npy`, `ome-zarr`, `gifti`,
+  `freesurfer-surface`, `freesurfer-annot`, `freesurfer-label`, `vtk`,
+  `trk`, `tck`, `trx`, `bval-bvec`, `fsl-mat`, `fnirt-coef`,
+  `fnirt-field`, `x5`, `itk-transform`, `displacement-field`,
+  `spm-deformation`, `mrtrix-warp`, `afni-1d`, `lta`, `xfm`,
+  `matlab-mat`, `freesurfer-lut`, `json`, `tsv`, `csv`. RFC 0010 carries
+  the registry with each token's parent and EDAM cross-reference. When
+  `formats` is absent, the value is in the format conventional for its
+  type.
 - `space` — the coordinate space of a spatial value. Where BIDS defines a
   `space-<label>` value it MUST be used (`individual`,
-  `MNI152NLin2009cAsym`, `fsnative`, `fsaverage`, `fsLR`, ...); other
-  labels are accepted and compared literally. On a tool output only, the
-  reference form `inputs.<local-id>` declares the output to be in the same
-  space as the named input of the same tool. A space label says nothing
-  about grid resolution. `space` MAY appear on `neuro:volume`,
-  `neuro:mask`, `neuro:label-map`, `neuro:statmap`, `neuro:probseg`,
-  `neuro:surface`, `neuro:tract`, `neuro:cifti`, extension types, and
-  arrays of these; a validator MUST reject it elsewhere.
-- `labelSystem` — the lookup table that gives meaning to the integers of
-  a label map: a registered name (`freesurfer`, `fsl-fast`, `spm-tpm`,
-  `desikan-killiany`, `destrieux`, `aal`, `harvard-oxford`, `schaefer`,
-  `binary`), another literal name, or a URL to a table file. `labelSystem`
-  MAY appear on `neuro:label-map`, `neuro:probseg`, extension types, and
-  arrays of these; a validator MUST reject it elsewhere.
+  `MNI152NLin2009cAsym`, `MNI152NLin6Asym`, `MNI152Lin`, `fsnative`,
+  `fsaverage`, `fsLR`, ...). A space label says nothing about the grid.
+  `space` MAY appear on `neuro:volume`, `neuro:mask`, `neuro:label-map`,
+  `neuro:statmap`, `neuro:probseg`, `neuro:surface`, `neuro:tract`,
+  `neuro:cifti`, extension types, and arrays of these; a validator MUST
+  reject it elsewhere, including on `neuro:transform`.
+- `resolution` — voxel spacing in millimetres: one positive number for an
+  isotropic grid, or three in axis order. `resolution` MAY appear on
+  `neuro:volume`, `neuro:mask`, `neuro:label-map`, `neuro:statmap`,
+  `neuro:probseg`, extension types, and arrays of these.
+- `density` — surface mesh density as a BIDS `den-<label>` value (`32k`,
+  `59k`, `164k`, `41k`, ...). `density` MAY appear on `neuro:surface`,
+  `neuro:cifti`, extension types, and arrays of these.
+- `labelSystem` — the integer table that gives meaning to the values of a
+  label map, or the volume order of a probabilistic segmentation: a
+  registered name (`freesurfer`, `mrtrix-fs-default`, `mrtrix-hcpmmp1`,
+  `mrtrix-5tt`, `fsl-fast`, `spm-tpm`, `ants-atropos-6`,
+  `harvard-oxford-cortical`, `harvard-oxford-subcortical`,
+  `neuromorphometrics`, `aal`, `lpba40`, `hcp-mmp1`, `binary`, or
+  `embedded` for a file that carries its own table), or a URL to a BIDS
+  `dseg.tsv` or FreeSurfer LUT file. A label system is a specific table,
+  not a parcellation: the same parcellation under different integers is a
+  different label system. `labelSystem` MAY appear on `neuro:label-map`,
+  `neuro:probseg`, extension types, and arrays of these.
 
-None of the three qualifiers may appear on `core:string`, `core:number`,
+Two forms are shared by all five qualifiers:
+
+- **Inheritance from an input.** On a tool output only, a qualifier may be
+  the string `inputs.<local-id>`, declaring that the output has the same
+  value of that qualifier as the named input of the same tool, whatever
+  it turns out to be. A brain extractor writes `"formats": "inputs.image"`,
+  `"space": "inputs.image"`, `"resolution": "inputs.image"`.
+- **Vendor prefixes.** Every qualifier vocabulary is open. A value that is
+  neither a registered token nor, for `space` and `density`, a BIDS label,
+  SHOULD carry a vendor prefix in the form `<vendor>:<value>`
+  (`afni:MNI_ANAT`, `brainvoyager:vmr`, `neurodesk:subject-1mm`). The
+  prefixes `core`, `neuro`, `bids`, and `prov` are reserved and a
+  validator MUST reject them. Unregistered values are preserved and
+  compared literally; a validator MUST NOT reject them.
+
+None of the five qualifiers may appear on `core:string`, `core:number`,
 `core:integer`, `core:boolean`, `core:object`, `core:json`, or arrays of
 these. A qualifier on a `core:array<...>` declaration applies to every
 element.
 
 Qualifiers take part in binding type compatibility (§20). For a binding
 from a source declaration to a target declaration, where both sides
-declare the qualifier: disjoint `formats` sets are an error and a source
-format the target does not list is a warning; differing `space` labels
-are an error, after resolving any `inputs.<local-id>` reference through
-the producing step's bindings; differing `labelSystem` values are an
-error. Comparison is literal and case-sensitive. When either side omits a
-qualifier, no check is made for it. A runtime that can act on a mismatch
-(convert, resample, relabel) MAY accept the binding and MUST record the
-conversion in provenance as an activity of its own.
+declare the qualifier, after resolving any `inputs.<local-id>` reference
+through the producing step's bindings:
+
+- `formats`: a source token is accepted by a target token that equals it
+  or is its parent. If no source token equals, is the parent of, or is a
+  child of any target token, the binding is an error; otherwise a source
+  token accepted by no target token is a warning.
+- `space` and `density`: differing labels are an error.
+- `resolution`: differing spacings are an error, a single number being
+  expanded to three, with 0.001 mm tolerance per axis.
+- `labelSystem`: differing values are an error, except that `embedded`
+  against a named system is a warning.
+
+Comparison of strings is literal and case-sensitive. When either side
+omits a qualifier, or a reference resolves to a declaration without it,
+no check is made for it. A runtime that can act on a mismatch (convert,
+resample, relabel) MAY accept the binding and MUST record the conversion
+in provenance as an activity of its own. A runtime writing a NIfTI
+artifact declared in an MNI152 space SHOULD set its sform and qform codes
+to 4, the only in-band signal FSL and FSLeyes read.
 
 ## 8. References
 
@@ -938,10 +983,11 @@ validator SHOULD check:
 - output mapping target existence
 - binding type compatibility
 - type-qualifier compatibility (§7.1): where both sides of a binding declare
-  `formats`, `space`, or `labelSystem`, the sets intersect, the resolved
-  space labels match, and the label systems match; a `space` of the form
-  `inputs.<local-id>` appears only on a tool output and names an input of
-  the same tool
+  `formats`, `space`, `resolution`, `density`, or `labelSystem`, the format
+  tokens are related through the token hierarchy, and the resolved space,
+  resolution, density and label-system values match; a qualifier of the
+  form `inputs.<local-id>` appears only on a tool output and names an
+  input of the same tool
 - condition reference validity
 - heuristic source validity
 - heuristic output type compatibility
@@ -1582,8 +1628,8 @@ standards rather than replace them.
 - Back-pressure and rate-limit semantics for high-volume event streams.
 - Bidirectional event transports beyond `core:websocket` (runtime-to-tool
   control messages such as cancel, pause, resume).
-- A `resolution` type qualifier separating grid spacing from `space`, and
-  source/target spaces for `neuro:transform` (RFC 0010).
+- Source and target spaces, direction, and coordinate convention for
+  `neuro:transform` (RFC 0010 leaves the transform type unqualified).
 
 ## 27. Workflow Stages
 

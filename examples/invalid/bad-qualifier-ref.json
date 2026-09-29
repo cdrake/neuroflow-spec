@@ -1,0 +1,15 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-qualifier-ref",
+  "version": "1.0.0",
+  "description": "A qualifier reference that is not of the form inputs.<local-id> (RFC 0010).",
+  "inputs": {
+    "value": {
+      "type": "neuro:volume",
+      "description": "Test input.",
+      "formats": "steps.convert.outputs.volume"
+    }
+  },
+  "outputs": {}
+}
