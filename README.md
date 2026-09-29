@@ -45,6 +45,12 @@ Status: pre-1.0 draft, created 2026-05-20.
   adding the `formats`, `space`, and `labelSystem` qualifiers to type
   declarations, with binding compatibility rules, adopted from the
   Neurodesk Webapps `automation.json` contracts.
+- [docs/type-qualifiers-survey.md](docs/type-qualifiers-survey.md): survey
+  of how workflow languages (CWL, Galaxy, Boutiques, Pydra), vocabularies
+  (BIDS, TemplateFlow, EDAM, NIDM, DICOM) and packages (AFNI, SPM, FSL,
+  FSLeyes, FreeSurfer, ANTs, MRtrix3, Workbench, Slicer, NiiVue) express
+  format, coordinate space and label tables, with recommended changes to
+  RFC 0010.
 - [docs/niivue-desktop-source-model.md](docs/niivue-desktop-source-model.md):
   historical notes on the original NiiVue Desktop model and its mapping.
 - [examples/](examples/): valid example documents, plus `examples/invalid/`

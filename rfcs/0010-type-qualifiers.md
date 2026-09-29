@@ -309,6 +309,14 @@ semantic rules for §20.
   `application/gzip`, which says nothing), and one string cannot list
   the three formats a tool accepts.
 
+## Prior art
+
+[docs/type-qualifiers-survey.md](../docs/type-qualifiers-survey.md)
+surveys how workflow languages, vocabularies and the common
+neuroimaging packages express each qualifier, and lists the changes
+to this RFC that the survey recommends. Those changes are not yet
+applied to this draft.
+
 ## Open issues
 
 - Should the spec add a `resolution` qualifier (`"1mm"`, or `[1, 1, 1]`
