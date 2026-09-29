@@ -1,0 +1,41 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neurodesk.webapps/synthseg",
+  "version": "1.0.0",
+  "description": "SynthSeg 2.0 whole-brain segmentation, as projected from the Neurodesk Webapps automation.json contract. Exercises the RFC 0010 type qualifiers: formats on the input, an inputs.<id> space reference and a labelSystem on the output.",
+  "inputs": {
+    "image": {
+      "type": "neuro:volume",
+      "description": "One anatomical head image, unstripped.",
+      "formats": ["nifti"],
+      "space": "individual"
+    },
+    "mode": {
+      "type": "core:string",
+      "description": "Fast mode skips flip averaging and topology postprocessing.",
+      "enum": ["default", "fast"],
+      "default": "default"
+    },
+    "ct": {
+      "type": "core:boolean",
+      "description": "Input is CT in Hounsfield units; omitted uses the app's intensity detection.",
+      "optional": true
+    }
+  },
+  "outputs": {
+    "labels": {
+      "type": "neuro:label-map",
+      "description": "Whole-brain segmentation resampled to a 1 mm grid in the input's space.",
+      "formats": ["nifti"],
+      "space": "inputs.image",
+      "labelSystem": "freesurfer",
+      "delivery": { "mode": "core:result-dir", "path": "labels.nii.gz" }
+    },
+    "report": {
+      "type": "core:json",
+      "description": "Per-label voxel counts and volumes in millilitres, with input and output checksums.",
+      "delivery": { "mode": "core:result-dir", "path": "report.json" }
+    }
+  }
+}

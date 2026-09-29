@@ -1,0 +1,15 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-label-system",
+  "version": "1.0.0",
+  "description": "labelSystem on a neuro:volume output; the qualifier is only defined for label maps and probabilistic segmentations (RFC 0010).",
+  "inputs": {},
+  "outputs": {
+    "brain": {
+      "type": "neuro:volume",
+      "description": "Skull-stripped image.",
+      "labelSystem": "freesurfer"
+    }
+  }
+}

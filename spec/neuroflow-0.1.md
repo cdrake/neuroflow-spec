@@ -291,7 +291,65 @@ Array values use the container form `core:array<element-type>`, for example
 `core:array<neuro:volume>` or `core:array<core:string>`.
 
 Type declarations MAY include `description`, `optional`, `default`, `enum`,
-`min`, `max`, `label`, and `extensions`.
+`min`, `max`, `label`, `extensions`, and the type qualifiers `formats`,
+`space`, and `labelSystem`.
+
+### 7.1 Type Qualifiers
+
+A qualified type names a concept; a type qualifier narrows how a value of
+that type is encoded or situated, so that validators can compare two
+declarations and planners can insert a conversion between them (RFC 0010).
+
+```json
+{
+  "type": "neuro:label-map",
+  "description": "Whole-brain segmentation.",
+  "formats": ["nifti"],
+  "space": "inputs.image",
+  "labelSystem": "freesurfer"
+}
+```
+
+- `formats` — array of lowercase tokens (`^[a-z][a-z0-9-]*$`), non-empty,
+  no duplicates. On an input, the formats the tool accepts; on an output,
+  the formats it may produce. Registered tokens: `nifti` (plain or gzip),
+  `mgz`, `nrrd`, `minc`, `analyze`, `dicom`, `gifti`, `freesurfer-surface`,
+  `cifti`, `trk`, `tck`, `ome-zarr`, `bval-bvec`, `fsl-mat`,
+  `itk-transform`, `lta`, `json`, `tsv`, `csv`. Unregistered tokens are
+  accepted and compared literally. When `formats` is absent, the value is
+  in the format conventional for its type.
+- `space` — the coordinate space of a spatial value. Where BIDS defines a
+  `space-<label>` value it MUST be used (`individual`,
+  `MNI152NLin2009cAsym`, `fsnative`, `fsaverage`, `fsLR`, ...); other
+  labels are accepted and compared literally. On a tool output only, the
+  reference form `inputs.<local-id>` declares the output to be in the same
+  space as the named input of the same tool. A space label says nothing
+  about grid resolution. `space` MAY appear on `neuro:volume`,
+  `neuro:mask`, `neuro:label-map`, `neuro:statmap`, `neuro:probseg`,
+  `neuro:surface`, `neuro:tract`, `neuro:cifti`, extension types, and
+  arrays of these; a validator MUST reject it elsewhere.
+- `labelSystem` — the lookup table that gives meaning to the integers of
+  a label map: a registered name (`freesurfer`, `fsl-fast`, `spm-tpm`,
+  `desikan-killiany`, `destrieux`, `aal`, `harvard-oxford`, `schaefer`,
+  `binary`), another literal name, or a URL to a table file. `labelSystem`
+  MAY appear on `neuro:label-map`, `neuro:probseg`, extension types, and
+  arrays of these; a validator MUST reject it elsewhere.
+
+None of the three qualifiers may appear on `core:string`, `core:number`,
+`core:integer`, `core:boolean`, `core:object`, `core:json`, or arrays of
+these. A qualifier on a `core:array<...>` declaration applies to every
+element.
+
+Qualifiers take part in binding type compatibility (§20). For a binding
+from a source declaration to a target declaration, where both sides
+declare the qualifier: disjoint `formats` sets are an error and a source
+format the target does not list is a warning; differing `space` labels
+are an error, after resolving any `inputs.<local-id>` reference through
+the producing step's bindings; differing `labelSystem` values are an
+error. Comparison is literal and case-sensitive. When either side omits a
+qualifier, no check is made for it. A runtime that can act on a mismatch
+(convert, resample, relabel) MAY accept the binding and MUST record the
+conversion in provenance as an activity of its own.
 
 ## 8. References
 
@@ -879,6 +937,11 @@ validator SHOULD check:
 - tool output existence
 - output mapping target existence
 - binding type compatibility
+- type-qualifier compatibility (§7.1): where both sides of a binding declare
+  `formats`, `space`, or `labelSystem`, the sets intersect, the resolved
+  space labels match, and the label systems match; a `space` of the form
+  `inputs.<local-id>` appears only on a tool output and names an input of
+  the same tool
 - condition reference validity
 - heuristic source validity
 - heuristic output type compatibility
@@ -1519,6 +1582,8 @@ standards rather than replace them.
 - Back-pressure and rate-limit semantics for high-volume event streams.
 - Bidirectional event transports beyond `core:websocket` (runtime-to-tool
   control messages such as cancel, pause, resume).
+- A `resolution` type qualifier separating grid spacing from `space`, and
+  source/target spaces for `neuro:transform` (RFC 0010).
 
 ## 27. Workflow Stages
 

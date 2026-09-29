@@ -41,6 +41,10 @@ Status: pre-1.0 draft, created 2026-05-20.
   for exposing a NeuroFlow runtime to AI agents over the Model Context
   Protocol: tools and workflows as MCP tools, runs as tasks, approvals as
   input requests, artifacts as resources, and `uiApp` tools as MCP Apps.
+- [rfcs/0010-type-qualifiers.md](rfcs/0010-type-qualifiers.md): proposed RFC
+  adding the `formats`, `space`, and `labelSystem` qualifiers to type
+  declarations, with binding compatibility rules, adopted from the
+  Neurodesk Webapps `automation.json` contracts.
 - [docs/niivue-desktop-source-model.md](docs/niivue-desktop-source-model.md):
   historical notes on the original NiiVue Desktop model and its mapping.
 - [examples/](examples/): valid example documents, plus `examples/invalid/`
@@ -118,6 +122,10 @@ The schema-backed 0.1 draft is in place:
   directory, event stream, fixed path, and exit code; tool-level
   defaults and per-output overrides; and `NEUROFLOW_OUTPUT_*` channel
   discovery.
+- Type qualifiers (RFC 0010): `formats`, `space`, and `labelSystem` on any
+  type declaration, so a validator can reject a NIfTI-only tool bound to
+  an MGZ output, a native-space label map bound to a template-space
+  consumer, or two label maps with different lookup tables.
 - Reference extension schemas for the `niivue/ui`, `niivue/runtime`,
   `bids/profile`, and `neurovue` namespaces, plus the provisional
   `neuroflow/mcp` namespace from RFC 0009.

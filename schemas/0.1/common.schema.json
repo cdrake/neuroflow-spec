@@ -174,8 +174,92 @@
         "enum": { "type": "array", "description": "Constrained set of allowed values.", "items": {} },
         "min": { "type": "number", "description": "Minimum value for numeric types." },
         "max": { "type": "number", "description": "Maximum value for numeric types." },
+        "formats": { "$ref": "#/$defs/formats" },
+        "space": { "$ref": "#/$defs/space" },
+        "labelSystem": { "$ref": "#/$defs/labelSystem" },
         "extensions": { "$ref": "#/$defs/extensions" }
-      }
+      },
+      "allOf": [{ "$ref": "#/$defs/typeQualifierRules" }]
+    },
+    "formats": {
+      "type": "array",
+      "description": "Type qualifier (RFC 0010): file formats the value may be encoded in, as lowercase tokens (nifti, mgz, nrrd, dicom, gifti, tsv, ...). On an input, what the tool accepts; on an output, what it may produce. Absent means the format conventional for the type.",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+    },
+    "space": {
+      "type": "string",
+      "description": "Type qualifier (RFC 0010): the coordinate space of a spatial value. A BIDS space label where one exists (individual, MNI152NLin2009cAsym, fsnative, ...), any other literal label, or on a tool output the reference inputs.<local-id> meaning the same space as that input.",
+      "minLength": 1
+    },
+    "labelSystem": {
+      "type": "string",
+      "description": "Type qualifier (RFC 0010): the lookup table that gives meaning to the integers of a label map (freesurfer, fsl-fast, desikan-killiany, binary, ...) or a URL to a table file.",
+      "minLength": 1
+    },
+    "typeQualifierRules": {
+      "description": "Which type qualifiers a declaration may carry, by type (RFC 0010). Scalar core types carry none; space is limited to spatial neuro types; labelSystem to label maps and probabilistic segmentations. Extension types may carry any qualifier.",
+      "allOf": [
+        {
+          "if": {
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "enum": [
+                  "core:string", "core:number", "core:integer", "core:boolean", "core:object", "core:json",
+                  "core:array<core:string>", "core:array<core:number>", "core:array<core:integer>",
+                  "core:array<core:boolean>", "core:array<core:object>", "core:array<core:json>"
+                ]
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [{ "required": ["formats"] }, { "required": ["space"] }, { "required": ["labelSystem"] }]
+            }
+          }
+        },
+        {
+          "if": { "required": ["space"] },
+          "then": {
+            "properties": {
+              "type": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "neuro:volume", "neuro:mask", "neuro:label-map", "neuro:statmap", "neuro:probseg",
+                      "neuro:surface", "neuro:tract", "neuro:cifti",
+                      "core:array<neuro:volume>", "core:array<neuro:mask>", "core:array<neuro:label-map>",
+                      "core:array<neuro:statmap>", "core:array<neuro:probseg>", "core:array<neuro:surface>",
+                      "core:array<neuro:tract>", "core:array<neuro:cifti>"
+                    ]
+                  },
+                  { "$ref": "#/$defs/extensionType" }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": { "required": ["labelSystem"] },
+          "then": {
+            "properties": {
+              "type": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "neuro:label-map", "neuro:probseg",
+                      "core:array<neuro:label-map>", "core:array<neuro:probseg>"
+                    ]
+                  },
+                  { "$ref": "#/$defs/extensionType" }
+                ]
+              }
+            }
+          }
+        }
+      ]
     },
     "extensions": {
       "type": "object",
