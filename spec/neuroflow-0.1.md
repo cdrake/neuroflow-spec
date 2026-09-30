@@ -176,7 +176,10 @@ Every NeuroFlow document uses a common envelope:
 ```
 
 `neuroflow` identifies the specification version used by the document. For this
-draft it MUST be `0.1.0`.
+draft it MUST be `0.1.0`, or `0.1.1` for a document that carries any of the
+type qualifiers of §7.1 (RFC 0010). A validator built for `0.1.0` rejects a
+`0.1.1` document; that is intended, since the qualifiers are execution
+requirements it cannot check.
 
 `kind` identifies the document family and MUST be `workflow`, `tool`,
 `heuristic`, or `provenance`.
@@ -299,6 +302,7 @@ Type declarations MAY include `description`, `optional`, `default`, `enum`,
 A qualified type names a concept; a type qualifier narrows how a value of
 that type is encoded or situated, so that validators can compare two
 declarations and planners can insert a conversion between them (RFC 0010).
+A document that carries any qualifier declares `"neuroflow": "0.1.1"` (§5).
 
 ```json
 {
@@ -330,7 +334,8 @@ declarations and planners can insert a conversion between them (RFC 0010).
 - `space` — the coordinate space of a spatial value. Where BIDS defines a
   `space-<label>` value it MUST be used (`individual`,
   `MNI152NLin2009cAsym`, `MNI152NLin6Asym`, `MNI152Lin`, `fsnative`,
-  `fsaverage`, `fsLR`, ...). A space label says nothing about the grid.
+  `fsaverage`, `fsLR`, ...). A label MAY carry a template revision after
+  `@` (`neurodesk:atlas@2`). A space label says nothing about the grid.
   `space` MAY appear on `neuro:volume`, `neuro:mask`, `neuro:label-map`,
   `neuro:statmap`, `neuro:probseg`, `neuro:surface`, `neuro:tract`,
   `neuro:cifti`, extension types, and arrays of these; a validator MUST
@@ -395,8 +400,9 @@ through the producing step's bindings:
   or is its parent. Every source token accepted: `compatible`. No source
   token equal to, parent of, or child of any target token:
   `incompatible`. Otherwise `requires-runtime-check`.
-- `space`: the same template label is `compatible`; different labels are
-  `incompatible`; two subject-specific labels (`individual`, `fsnative`)
+- `space`: the same template label is `compatible`, unless both carry a
+  revision and they differ, which is `requires-runtime-check`; different
+  labels are `incompatible`; two subject-specific labels (`individual`, `fsnative`)
   are `compatible` only when both trace through bindings to the same
   workflow input or step output, otherwise `requires-runtime-check`.
 - `resolution`: equal spacings are `compatible`, a single number being
@@ -412,7 +418,10 @@ Comparison of strings is literal and case-sensitive. A strict executor
 MUST resolve every `requires-runtime-check` by inspecting the artifact
 or trusting recorded provenance before launching the consumer, and MUST
 fail with an unresolved-constraint diagnostic when it cannot; a missing
-inspector is not a passed check. A runtime that can act on a mismatch
+inspector is not a passed check. An executor MAY apply the strict profile
+of RFC 0010, under which a source that lacks a revision the target declares
+is `requires-runtime-check` rather than `compatible`, and MUST say so in its
+conformance statement. A runtime that can act on a mismatch
 (convert, resample, relabel) MAY accept the binding and MUST record the
 conversion in provenance as an activity of its own. A runtime writing a
 NIfTI artifact declared in an MNI152 space SHOULD set its sform and
@@ -1010,7 +1019,8 @@ validator SHOULD check:
   `incompatible` axis fails validation and a `requires-runtime-check`
   axis is reported for the executor; a qualifier of the form
   `inputs.<local-id>` appears only on a tool output and names an input
-  of the same tool
+  of the same tool; a document that carries any qualifier declares
+  `neuroflow` `0.1.1` (§5)
 - condition reference validity
 - heuristic source validity
 - heuristic output type compatibility

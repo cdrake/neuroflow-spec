@@ -1,0 +1,15 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-qualifier-version",
+  "version": "1.0.0",
+  "description": "A type qualifier in a document that declares 0.1.0; a qualified document must declare 0.1.1 (RFC 0010).",
+  "inputs": {
+    "image": {
+      "type": "neuro:volume",
+      "description": "Input image.",
+      "formats": ["nifti"]
+    }
+  },
+  "outputs": {}
+}

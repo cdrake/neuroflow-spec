@@ -1,0 +1,26 @@
+{
+  "neuroflow": "0.1.1",
+  "kind": "tool",
+  "id": "neuroflow.examples/atlas-resample",
+  "version": "1.0.0",
+  "description": "Resamples a label map onto a vendor template whose files are versioned; the space label carries the template revision (RFC 0010).",
+  "inputs": {
+    "labels": {
+      "type": "neuro:label-map",
+      "description": "Label map in the subject's own space.",
+      "formats": ["nifti"],
+      "space": "individual",
+      "labelSystem": "freesurfer"
+    }
+  },
+  "outputs": {
+    "resampled": {
+      "type": "neuro:label-map",
+      "description": "The label map on the vendor template grid.",
+      "formats": ["nii-gz"],
+      "space": "neurodesk:atlas@2",
+      "resolution": 1,
+      "labelSystem": "inputs.labels"
+    }
+  }
+}

@@ -6,8 +6,8 @@
   "$defs": {
     "specVersion": {
       "type": "string",
-      "description": "NeuroFlow specification version this document targets.",
-      "const": "0.1.0"
+      "description": "NeuroFlow specification version this document targets. 0.1.1 is required for a document that carries any of the type qualifiers of RFC 0010 (formats, space, resolution, density, labelSystem).",
+      "enum": ["0.1.0", "0.1.1"]
     },
     "semver": {
       "type": "string",
@@ -201,9 +201,9 @@
       ]
     },
     "space": {
-      "description": "Type qualifier (RFC 0010): the coordinate space of a spatial value. A BIDS space label where one exists (individual, MNI152NLin2009cAsym, fsnative, ...), a vendor-prefixed label otherwise (afni:MNI_ANAT), or on a tool output inputs.<local-id>.",
+      "description": "Type qualifier (RFC 0010): the coordinate space of a spatial value. A BIDS space label where one exists (individual, MNI152NLin2009cAsym, fsnative, ...), a vendor-prefixed label otherwise (afni:MNI_ANAT), optionally with a template revision after @ (neurodesk:atlas@2), or on a tool output inputs.<local-id>.",
       "anyOf": [
-        { "type": "string", "pattern": "^(?:(?!(?:core|neuro|bids|prov):)[a-z][a-z0-9.-]*:)?[A-Za-z0-9][A-Za-z0-9_-]*$" },
+        { "type": "string", "pattern": "^(?:(?!(?:core|neuro|bids|prov):)[a-z][a-z0-9.-]*:)?[A-Za-z0-9][A-Za-z0-9_-]*(?:@[A-Za-z0-9][A-Za-z0-9._-]*)?$" },
         { "$ref": "#/$defs/qualifierInputRef" }
       ]
     },

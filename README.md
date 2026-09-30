@@ -45,9 +45,10 @@ Status: pre-1.0 draft, created 2026-05-20.
   adding the `formats`, `space`, `resolution`, `density`, and
   `labelSystem` qualifiers to type declarations, with a format token
   registry, BIDS space labels, vendor prefixes, `inputs.<id>` inheritance
-  and three-outcome binding compatibility rules; adopted from the
-  Neurodesk Webapps `automation.json` contracts, revised after the survey
-  below, and reconciled with the Neurodesk draft in neurodesk/webapps#107.
+  and three-outcome binding compatibility rules; documents that use them
+  declare `neuroflow: "0.1.1"`. Adopted from the Neurodesk Webapps
+  `automation.json` contracts, revised after the survey below, and merged
+  with the Neurodesk draft in neurodesk/webapps#107 into one RFC.
 - [docs/type-qualifiers-survey.md](docs/type-qualifiers-survey.md): survey
   of how workflow languages (CWL, Galaxy, Boutiques, Pydra), vocabularies
   (BIDS, TemplateFlow, EDAM, NIDM, DICOM) and packages (AFNI, SPM, FSL,
@@ -100,7 +101,10 @@ NeuroFlow is declarative, explicit, and layered:
 The specification follows semantic versioning.
 
 Non-breaking changes include adding optional fields, adding extension namespaces,
-and adding compatible schema metadata. Breaking changes include removing fields,
+and adding compatible schema metadata. Within a minor line, the `neuroflow`
+envelope value advances by a patch when a document needs a feature an older
+validator would not check, so that the older validator rejects it: `0.1.1` for
+the RFC 0010 qualifiers. Breaking changes include removing fields,
 renaming fields, tightening validation in ways that reject previously valid
 documents, removing enum values, changing required fields, or changing execution
 semantics.

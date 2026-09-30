@@ -2,11 +2,19 @@
 
 Status: Proposed
 
+Authors: Chris Drake (NiiVue); Steffen Bollmann (Neurodesk), whose draft
+in [neurodesk/webapps#107](https://github.com/neurodesk/webapps/pull/107)
+this RFC absorbs (co-authorship proposed, pending his agreement)
+
 Created: 2026-09-29
 
 Revised: 2026-09-29 (after the [prior-art survey](../docs/type-qualifiers-survey.md));
 2026-09-30 (reconciled with the Neurodesk draft in
-[neurodesk/webapps#107](https://github.com/neurodesk/webapps/pull/107))
+[neurodesk/webapps#107](https://github.com/neurodesk/webapps/pull/107));
+2026-09-30 (merged into one RFC for both projects: string values defined
+as the serialization of the Neurodesk pair form, revisions on space
+labels, a strict executor profile, the `0.1.1` envelope value, and an
+implementation plan with owners)
 
 ## Summary
 
@@ -39,6 +47,18 @@ an unknown source value is not a pass, subject identity for `individual`
 spaces, the executor's obligation to resolve or fail, a conformance
 table, table revisions on label systems, and a migration path for
 contracts whose annotations are not yet portable.
+
+The third revision makes this the single RFC for both projects, in
+place of the two drafts. The string values here are defined as the
+serialization of the pair form the Neurodesk draft proposed, so
+neither side loses information; a revision may follow `@` on a space
+label as well as on a label system; the exact-identity rule the
+Neurodesk draft asked for becomes a strict executor profile rather
+than the validator's floor; and a document that uses any qualifier
+declares `"neuroflow": "0.1.1"`, so that a runtime built against 0.1.0
+rejects it instead of running a workflow whose constraints it cannot
+read. The implementation plan near the end names an owner for each
+piece.
 
 The companion specification text lives in
 [spec/neuroflow-0.1.md §7.1](../spec/neuroflow-0.1.md). Schema changes
@@ -109,6 +129,30 @@ preserved and compared literally, it cannot collide with a token
 registered later, and it records where the name came from when two
 packages disagree. The prefixes `core`, `neuro`, `bids` and `prov` are
 reserved.
+
+**Revisions.** A `space` label or a `labelSystem` name MAY carry a
+revision after `@`: `freesurfer@7.4.1`, `fsaverage@7.4.1`,
+`neurodesk:atlas@2`. The name is the identity and the revision narrows
+it (see Spaces and Label systems). A revision is never required: most
+tools cannot state one honestly, and a name without one is a weaker
+claim, not a wrong one.
+
+**String form.** Each value is a string, and each string is the
+serialization of a pair. `name@revision` is `{ "id": name, "version":
+revision }`; `inputs.<local-id>` is `{ "kind": "relative", "input":
+<local-id> }`; a bare label is the pair with the revision absent. The
+Neurodesk draft
+([neurodesk/webapps#107](https://github.com/neurodesk/webapps/pull/107))
+wrote the pairs as objects; this RFC writes them as strings because a
+string validates with a pattern, compares, sorts and greps without a
+parser, and is what the `automation.json` contracts already carry. An
+implementation MAY parse a value into the pair and MUST compare it as
+the rules below say, not as an opaque string. No information is lost
+in either direction.
+
+**Specification version.** A document that carries any of the five
+qualifiers declares `"neuroflow": "0.1.1"`; a document without them
+keeps `"0.1.0"`. See Specification version below.
 
 A qualifier on a `core:array<...>` declaration applies to every element.
 Qualifiers take part in binding type compatibility (§20): a validator
@@ -308,6 +352,16 @@ A space label says nothing about the voxel grid: `individual` does not
 imply the acquisition resolution and `MNI152NLin2009cAsym` does not
 imply 1 mm. That is what `resolution` is for.
 
+A space label MAY carry a revision after `@` (`fsaverage@7.4.1`,
+`neurodesk:atlas@2`), naming the release of the template files. A BIDS
+template label is a fixed frame by definition, so a revision on one is
+rarely needed; a vendor-prefixed template whose files can change
+between releases is where it earns its place. Same label, both
+revisions present and different, is `requires-runtime-check`: the
+runtime compares the two templates' geometry, and a strict executor
+without an inspector for that fails (see Runtime guidance). A revision
+on one side only does not change the outcome.
+
 A subject-specific label (`individual`, `fsnative`) identifies a kind
 of space, not one subject's frame. Two values both declared
 `individual` share a frame only if they descend from the same
@@ -440,7 +494,10 @@ Per axis, after resolving any `inputs.<local-id>` reference:
 - **`space`.** Both resolve to the same template label: `compatible`.
   Different labels: `incompatible`. Both a subject-specific label:
   `compatible` when the validator traces both to the same workflow
-  input or step output, otherwise `requires-runtime-check`.
+  input or step output, otherwise `requires-runtime-check`. Same
+  label, both carrying a revision, and the revisions differ:
+  `requires-runtime-check`; a revision on one side only does not
+  change the outcome.
 - **`resolution`.** Equal: `compatible`; different: `incompatible`. A
   single number is expanded to three before comparison, and two
   spacings are equal when each axis differs by less than 0.001 mm.
@@ -497,12 +554,17 @@ report; they do not convert.
 | `labelSystem: "freesurfer@7.3.2"` | `labelSystem: "freesurfer@7.4.1"` | `requires-runtime-check` |
 | `labelSystem: "freesurfer"` | `labelSystem: "mrtrix-fs-default"` | `incompatible` |
 | `labelSystem: "embedded"` | `labelSystem: "freesurfer"` | `requires-runtime-check` |
+| `space: "neurodesk:atlas@1"` | `space: "neurodesk:atlas@2"` | `requires-runtime-check` |
+| `space: "fsaverage"` | `space: "fsaverage@7.4.1"` | `compatible`; `requires-runtime-check` under the strict profile |
+| `labelSystem: "freesurfer"` | `labelSystem: "freesurfer@7.4.1"` | `compatible`; `requires-runtime-check` under the strict profile |
+| any qualifier in a document that declares `"neuroflow": "0.1.0"` | | rejected by a semantic validator (Specification version) |
 | `neuro:surface`, `formats: ["gifti"]` | `neuro:volume`, `formats: ["gifti"]` | `incompatible` (type) |
 
 Schema fixtures in `examples/invalid/` cover the syntactic half: empty
 and malformed token lists, values with reserved prefixes, a reference
-that is not `inputs.<id>`, a zero spacing, a revision with no name,
-and each qualifier on a type that cannot carry it.
+that is not `inputs.<id>`, a zero spacing, a revision with no name, a
+qualified document that declares `0.1.0`, and each qualifier on a type
+that cannot carry it.
 
 ## Runtime guidance
 
@@ -516,6 +578,19 @@ a conditionally valid plan from a runnable one. A matching affine alone
 does not establish that two `individual` values come from the same
 subject; provenance does. A runtime SHOULD state which inspectors it
 has, and MUST NOT treat a missing inspector as a passed check.
+
+**Strict profile.** The rules above are the validator's floor. An
+executor MAY run a strict profile in which a named `space` or
+`labelSystem` axis whose target carries a revision and whose source
+does not is `requires-runtime-check` rather than `compatible`, so that
+a claim without a revision is verified against the artifact before the
+consumer launches. This is the exact-identity behaviour the Neurodesk
+draft asked for, available where a runtime has the inspectors to back
+it, and absent where it would only turn honest declarations into
+refusals. A runtime that applies the profile MUST say so in its
+conformance statement and in each diagnostic the profile produces. The
+profile never changes a validator's outcome; it changes what the
+executor does with `compatible`.
 
 A runtime that writes a NIfTI artifact whose declared `space` is an
 MNI152 label SHOULD set the sform and qform code to 4
@@ -550,13 +625,16 @@ A validator MUST check:
   `bids`, or `prov`.
 - A qualifier of the form `inputs.<local-id>` appears only on a tool
   output and names an input declared on the same tool.
-- A `labelSystem` revision, when present, follows a name and is
-  non-empty.
+- A `space` or `labelSystem` revision, when present, follows a name
+  and is non-empty.
+- A document that carries any qualifier declares `"neuroflow":
+  "0.1.1"` (Specification version below).
 - Binding compatibility per the rules above: an `incompatible` axis is
   a validation failure, a `requires-runtime-check` axis is reported.
 
-All but the last two rules are expressed in the JSON Schema; the last
-two are semantic rules for §20.
+All but three of these rules are expressed in the JSON Schema. The
+`inputs.<local-id>` rule, the version rule and the binding rule are
+semantic rules for §20.
 
 ## What this RFC does **not** specify
 
@@ -585,18 +663,48 @@ two are semantic rules for §20.
   is an implementation choice. The declaration is a contract, and the
   validator checks contracts against each other.
 
+## Specification version
+
+The `neuroflow` envelope field accepts `"0.1.0"` and `"0.1.1"`. A
+document that carries any of the five qualifiers MUST declare
+`"0.1.1"`; a document that carries none SHOULD keep `"0.1.0"` and
+remains valid unchanged. The schemas stay at `schemas/0.1/`; the
+changes to `common.schema.json` are the `specVersion` definition (a
+`const` becomes an enum), the optional revision in the `space`
+pattern, and the qualifier definitions themselves. A validator that
+accepts `"0.1.1"` MUST implement this RFC's static rules and the
+compatibility outcomes of §20.
+
+This is the middle path between the two drafts. The README classes
+adding optional fields as a non-breaking change, which argued for
+shipping the qualifiers in 0.1 in place; the Neurodesk draft asked for
+a 0.2 so that a runtime built against the published 0.1 schemas
+rejects a document whose execution requirements it cannot read rather
+than silently ignoring them. A patch value satisfies both. Every
+validator published so far checks the envelope against the literal
+`"0.1.0"` (the schema `const`, and the reference runtime's own check),
+so a qualified document is refused by all of them, while an
+unqualified document, the schema `$id`s, a vendored schema snapshot
+and every existing example are untouched. A 0.2 would have copied
+every schema and re-versioned every document for an additive change.
+
+An adapter that emits tool documents from another contract format
+emits `"0.1.0"` while the source annotations stay in an extension
+block, and `"0.1.1"` from the first document in which it promotes one
+to a qualifier.
+
 ## Migration
 
 - An unqualified document remains valid and means what it meant.
 - A qualified document is rejected by a validator that predates this
   RFC, because `typeDeclaration` and `toolOutputDef` are closed
-  objects. That is the intended behaviour: an older runtime refuses a
-  document whose execution requirements it cannot read instead of
-  ignoring them.
-- The qualifiers ship in the 0.1 schemas. The README's compatibility
-  policy classes adding optional fields as non-breaking; whether the
-  schema `$id`s should move to a 0.2 path instead is an open issue
-  below.
+  objects and because its envelope value `"0.1.1"` is not the
+  `"0.1.0"` such a validator accepts. That is the intended behaviour:
+  an older runtime refuses a document whose execution requirements it
+  cannot read instead of ignoring them.
+- The qualifiers ship in the 0.1 schemas under the `"0.1.1"` envelope
+  value (Specification version above). No existing document changes; a
+  document gains `"0.1.1"` when it gains its first qualifier.
 - An adapter that generates tool documents from another contract
   format (the Neurodesk generator in neurodesk/webapps#107) MAY keep
   the source's own annotations in an extension block
@@ -618,6 +726,21 @@ reads. `MNI152-1mm`, `atlas`, `analysis`, `lesion-reference`, `RAS-mm`,
 the template or the input they mean, or stay as `neurodesk:<value>`;
 `moving-to-fixed` on a `neuro:transform` stays in the extension until
 the transform RFC.
+
+## Implementation plan
+
+The work splits by repository. Each item names its owner.
+
+| # | Work | Where | Owner |
+| --- | --- | --- | --- |
+| 1 | Qualifier definitions, the `specVersion` enum, the `space` revision pattern, and the fixtures under `examples/` | neuroflow-spec `schemas/0.1/`, `examples/` | Chris Drake (this PR) |
+| 2 | §5, §7.1 and §20 of the specification text, and this RFC | neuroflow-spec `spec/`, `rfcs/` | Chris Drake (this PR) |
+| 3 | Accept `"0.1.1"` in the reference validator and runtime; a three-outcome comparison API in the Rust core and the TypeScript validator; `requires-runtime-check` in planning diagnostics | cdrake/neuroflow `crates/neuroflow-core`, `crates/neuroflow-mcp`, `src/domain` | Chris Drake |
+| 4 | Header, format-reader and label-table inspectors for the reference runtime; advertise them; fail on a missing one | cdrake/neuroflow `crates/neuroflow-mcp` | Chris Drake |
+| 5 | Promote `extensions["neurodesk/data"]` values to qualifiers by the Migration mapping and emit `"0.1.1"` for promoted documents; scalar types for `maximum: 1` inputs | neurodesk/webapps `packages/desktop/neuroflow/generator.mjs` | Steffen Bollmann |
+| 6 | Desktop-side inspection of artifacts before a constrained consumer launches; the app-owner decisions for the strings the mapping leaves open | neurodesk/webapps | Steffen Bollmann |
+| 7 | Observed format, frame and table on provenance entities, and how a consumer authenticates evidence from a remote runtime | a follow-up RFC | both |
+| 8 | A `space` for `neuro:transform` (source, target, direction, axis convention) | a follow-up RFC | both |
 
 ## Alternatives considered
 
@@ -651,18 +774,28 @@ the transform RFC.
   qualifiers.
 - **Object-valued qualifiers** (`{ "kind": "relative", "input":
   "image" }`, `{ "id": ..., "version": ... }`), as the Neurodesk draft
-  proposes. Rejected for now: the relative form is one-to-one with
-  `inputs.<id>`, a revision fits after `@`, and a string compares,
-  sorts and greps without a parser. An object form can be added later
-  as another branch of the same schema without invalidating a string.
-- **A mandatory revision on every named space.** Rejected: a BIDS
-  space label is a fixed coordinate frame by definition (TemplateFlow
-  versions the files, not the frame), and a vendor-prefixed label can
-  carry a revision in its value.
+  proposes. Not adopted as the wire form: the string is defined as the
+  serialization of the same pair (Decision, "String form"), so the
+  relative form is `inputs.<id>`, the versioned form is
+  `name@revision`, and a string compares, sorts and greps without a
+  parser. An object form can be added later as another branch of the
+  same schema without invalidating a string.
+- **A mandatory revision on every named space.** Rejected as a
+  requirement, adopted as an option: a BIDS space label is a fixed
+  coordinate frame by definition (TemplateFlow versions the files, not
+  the frame), and most tools cannot state a revision honestly. A label
+  MAY carry one after `@`, and the strict profile lets an executor
+  insist on it.
 - **Exact identity for label systems.** The Neurodesk draft requires
   equal name and revision. Rejected as the sole rule: registered tables
   append, so a revision mismatch is a runtime table comparison, not a
-  refusal; the name is the identity and the revision narrows it.
+  refusal; the name is the identity and the revision narrows it. The
+  strict profile gives an executor that wants exact identity a way to
+  demand the evidence.
+- **A 0.2 schema path**, as the Neurodesk draft proposes. Rejected in
+  favour of the `"0.1.1"` envelope value (Specification version): it
+  gives the same refusal by older runtimes without copying the schemas
+  or re-versioning any document.
 - **A `res-<label>` keyword for resolution, as BIDS uses.** Rejected:
   BIDS resolves the keyword through a `Resolution` sidecar field that a
   tool document has no place for, and every package the survey looked
@@ -695,9 +828,12 @@ identify a subject; that a token names bytes or a layout, not a
 suffix; the conformance table; revisions on label systems; the
 extension block as migration path; and the open questions on registry
 ownership, revision identifiers and evidence across remote runtimes.
-Not taken: object-valued `space` and `labelSystem`, a mandatory
-revision on every named space, and the absence of a grid qualifier
-(see Alternatives considered).
+Reshaped rather than taken: object-valued `space` and `labelSystem`
+(kept as the pair the strings serialize), the mandatory revision
+(optional, with the strict profile), the 0.2 version (the `"0.1.1"`
+envelope value), and the absence of a grid qualifier (see Alternatives
+considered). The third revision merges the two drafts into this one
+document.
 
 ## Open issues
 
@@ -717,11 +853,6 @@ revision on every named space, and the absence of a grid qualifier
 - Whether the spec should publish `dseg.tsv` files for the registered
   label systems, and under what licence, given that several are
   derived from package data files.
-- Whether the qualifiers should be published under a 0.2 schema path
-  rather than added to 0.1 in place. The README policy and the closed
-  declaration objects argue for in place; the Neurodesk draft asks for
-  a new version so that no published schema changes under a pinned
-  snapshot.
 - Registry ownership: who admits a format token, a space label outside
   BIDS, or a label system, and where the tables live.
 - Whether a label-system revision is a release string, as here, or a
