@@ -400,8 +400,9 @@ through the producing step's bindings:
   or is its parent. Every source token accepted: `compatible`. No source
   token equal to, parent of, or child of any target token:
   `incompatible`. Otherwise `requires-runtime-check`.
-- `space`: the same template label is `compatible`, unless both carry a
-  revision and they differ, which is `requires-runtime-check`; different
+- `space`: the same template label is `compatible`, unless the target
+  carries a revision the source does not, or both carry revisions that
+  differ, which is `requires-runtime-check`; different
   labels are `incompatible`; two subject-specific labels (`individual`, `fsnative`)
   are `compatible` only when both trace through bindings to the same
   workflow input or step output, otherwise `requires-runtime-check`.
@@ -409,19 +410,19 @@ through the producing step's bindings:
   expanded to three, with 0.001 mm tolerance per axis; different
   spacings are `incompatible`.
 - `density`: equal labels are `compatible`; different are `incompatible`.
-- `labelSystem`: the same name is `compatible`, unless both carry a
-  revision and they differ, which is `requires-runtime-check`; different
+- `labelSystem`: the same name is `compatible`, unless the target
+  carries a revision the source does not, or both carry revisions that
+  differ, which is `requires-runtime-check`; different
   names are `incompatible`, except `embedded` against a named system,
   which is `requires-runtime-check`.
 
-Comparison of strings is literal and case-sensitive. A strict executor
+Comparison of strings is literal and case-sensitive. An executor
 MUST resolve every `requires-runtime-check` by inspecting the artifact
 or trusting recorded provenance before launching the consumer, and MUST
 fail with an unresolved-constraint diagnostic when it cannot; a missing
-inspector is not a passed check. An executor MAY apply the strict profile
-of RFC 0010, under which a source that lacks a revision the target declares
-is `requires-runtime-check` rather than `compatible`, and MUST say so in its
-conformance statement. A runtime that can act on a mismatch
+inspector is not a passed check. A runtime SHOULD state which
+inspectors it has (RFC 0010 lists the executor conformance cases). A
+runtime that can act on a mismatch
 (convert, resample, relabel) MAY accept the binding and MUST record the
 conversion in provenance as an activity of its own. A runtime writing a
 NIfTI artifact declared in an MNI152 space SHOULD set its sform and

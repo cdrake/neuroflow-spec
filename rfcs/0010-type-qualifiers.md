@@ -13,8 +13,11 @@ Revised: 2026-09-29 (after the [prior-art survey](../docs/type-qualifiers-survey
 [neurodesk/webapps#107](https://github.com/neurodesk/webapps/pull/107));
 2026-09-30 (merged into one RFC for both projects: string values defined
 as the serialization of the Neurodesk pair form, revisions on space
-labels, a strict executor profile, the `0.1.1` envelope value, and an
-implementation plan with owners)
+labels, the `0.1.1` envelope value, and an implementation plan with
+owners); 2026-09-30 (after review on the pull request: a revision the
+consumer declares and the producer does not is `requires-runtime-check`
+at the validator's floor, which replaces the strict executor profile,
+and executor conformance cases)
 
 ## Summary
 
@@ -52,9 +55,10 @@ The third revision makes this the single RFC for both projects, in
 place of the two drafts. The string values here are defined as the
 serialization of the pair form the Neurodesk draft proposed, so
 neither side loses information; a revision may follow `@` on a space
-label as well as on a label system; the exact-identity rule the
-Neurodesk draft asked for becomes a strict executor profile rather
-than the validator's floor; and a document that uses any qualifier
+label as well as on a label system; a revision the consumer declares
+and the producer does not claim is `requires-runtime-check`, never a
+pass, which is the exact-identity rule the Neurodesk draft asked for
+restated in three-outcome terms; and a document that uses any qualifier
 declares `"neuroflow": "0.1.1"`, so that a runtime built against 0.1.0
 rejects it instead of running a workflow whose constraints it cannot
 read. The implementation plan near the end names an owner for each
@@ -358,9 +362,12 @@ template label is a fixed frame by definition, so a revision on one is
 rarely needed; a vendor-prefixed template whose files can change
 between releases is where it earns its place. Same label, both
 revisions present and different, is `requires-runtime-check`: the
-runtime compares the two templates' geometry, and a strict executor
-without an inspector for that fails (see Runtime guidance). A revision
-on one side only does not change the outcome.
+runtime compares the two templates' geometry, and an executor without
+an inspector for that fails (see Runtime guidance). A revision on the
+target only is `requires-runtime-check` as well: the consumer requires
+a release the producer has not claimed, and only the artifact can show
+it. A revision on the source only is `compatible`; the producer claims
+more than the consumer asks for.
 
 A subject-specific label (`individual`, `fsnative`) identifies a kind
 of space, not one subject's frame. Two values both declared
@@ -495,18 +502,18 @@ Per axis, after resolving any `inputs.<local-id>` reference:
   Different labels: `incompatible`. Both a subject-specific label:
   `compatible` when the validator traces both to the same workflow
   input or step output, otherwise `requires-runtime-check`. Same
-  label, both carrying a revision, and the revisions differ:
-  `requires-runtime-check`; a revision on one side only does not
-  change the outcome.
+  label with a revision on the target that the source does not carry,
+  or with revisions on both that differ: `requires-runtime-check`. A
+  revision on the source only is `compatible`.
 - **`resolution`.** Equal: `compatible`; different: `incompatible`. A
   single number is expanded to three before comparison, and two
   spacings are equal when each axis differs by less than 0.001 mm.
 - **`density`.** Equal labels: `compatible`; different:
   `incompatible`.
-- **`labelSystem`.** Same name: `compatible`, except that when both
-  carry a revision and the revisions differ the axis is
-  `requires-runtime-check` and the runtime compares the tables; a
-  revision on one side only does not change the outcome. Different
+- **`labelSystem`.** Same name: `compatible`, except that a revision
+  on the target that the source does not carry, or revisions on both
+  that differ, is `requires-runtime-check` and the runtime compares
+  the tables; a revision on the source only is `compatible`. Different
   names: `incompatible`, except that `embedded` against a named system
   is `requires-runtime-check`: the runtime can read the file's table
   and compare it, a static validator cannot.
@@ -555,8 +562,10 @@ report; they do not convert.
 | `labelSystem: "freesurfer"` | `labelSystem: "mrtrix-fs-default"` | `incompatible` |
 | `labelSystem: "embedded"` | `labelSystem: "freesurfer"` | `requires-runtime-check` |
 | `space: "neurodesk:atlas@1"` | `space: "neurodesk:atlas@2"` | `requires-runtime-check` |
-| `space: "fsaverage"` | `space: "fsaverage@7.4.1"` | `compatible`; `requires-runtime-check` under the strict profile |
-| `labelSystem: "freesurfer"` | `labelSystem: "freesurfer@7.4.1"` | `compatible`; `requires-runtime-check` under the strict profile |
+| `space: "fsaverage"` | `space: "fsaverage@7.4.1"` | `requires-runtime-check` |
+| `space: "fsaverage@7.4.1"` | `space: "fsaverage"` | `compatible` |
+| `labelSystem: "freesurfer"` | `labelSystem: "freesurfer@7.4.1"` | `requires-runtime-check` |
+| `labelSystem: "freesurfer@7.4.1"` | `labelSystem: "freesurfer"` | `compatible` |
 | any qualifier in a document that declares `"neuroflow": "0.1.0"` | | rejected by a semantic validator (Specification version) |
 | `neuro:surface`, `formats: ["gifti"]` | `neuro:volume`, `formats: ["gifti"]` | `incompatible` (type) |
 
@@ -566,9 +575,29 @@ that is not `inputs.<id>`, a zero spacing, a revision with no name, a
 qualified document that declares `0.1.0`, and each qualifier on a type
 that cannot carry it.
 
+The static outcomes above are decided from declarations alone. The
+cases below are for an executor handed a `requires-runtime-check`
+binding; they are the runtime half of conformance, and a runtime's
+conformance statement lists which of them it can resolve.
+
+| Binding | Evidence the executor has | Required behaviour |
+| --- | --- | --- |
+| `formats: ["nifti"]` into `formats: ["nii"]` | a format reader identifies the file as `nii` | launch |
+| same | the reader identifies it as `nii-gz` | fail: constraint violated |
+| same | no format reader | fail: constraint unresolved; not a pass |
+| `space: "individual"` from input `a` into `space: "individual"` derived from input `b` | provenance records that `a` and `b` descend from one acquisition | launch |
+| same | only the two headers, and their affines match | fail: constraint unresolved; a matching affine is not subject identity |
+| `space: "fsaverage"` into `space: "fsaverage@7.4.1"` | provenance or the artifact names the release it was produced against | launch when it is `7.4.1`, else fail: constraint violated |
+| `space: "neurodesk:atlas@1"` into `space: "neurodesk:atlas@2"` | a template inspector compares the two releases' geometry | launch when they agree, else fail: constraint violated |
+| `labelSystem: "embedded"` into `labelSystem: "freesurfer"` | a label-table reader | launch when the embedded table maps onto the target's table, else fail: constraint violated |
+| `labelSystem: "freesurfer"` into `labelSystem: "freesurfer@7.4.1"` | a label-table reader and the registered table for the revision | launch when every integer the artifact uses is defined in that revision, else fail: constraint violated |
+| any `requires-runtime-check` axis | no inspector for that axis, no provenance | fail: constraint unresolved; the diagnostic names the binding, the axis and the missing inspector |
+| any `requires-runtime-check` axis, in an editor or planner | not applicable | show the plan as conditionally valid, never as runnable |
+| any `incompatible` axis the runtime can convert | a converter (format, resampling, relabelling) | MAY launch after converting, with the conversion recorded in provenance as its own activity |
+
 ## Runtime guidance
 
-A strict executor MUST resolve every `requires-runtime-check` outcome
+An executor MUST resolve every `requires-runtime-check` outcome
 before launching the consuming step: by reading the artifact (its
 header, a format reader, an embedded label table), or by trusting
 provenance that records the value. If it cannot establish the fact, it
@@ -579,18 +608,16 @@ does not establish that two `individual` values come from the same
 subject; provenance does. A runtime SHOULD state which inspectors it
 has, and MUST NOT treat a missing inspector as a passed check.
 
-**Strict profile.** The rules above are the validator's floor. An
-executor MAY run a strict profile in which a named `space` or
-`labelSystem` axis whose target carries a revision and whose source
-does not is `requires-runtime-check` rather than `compatible`, so that
-a claim without a revision is verified against the artifact before the
-consumer launches. This is the exact-identity behaviour the Neurodesk
-draft asked for, available where a runtime has the inspectors to back
-it, and absent where it would only turn honest declarations into
-refusals. A runtime that applies the profile MUST say so in its
-conformance statement and in each diagnostic the profile produces. The
-profile never changes a validator's outcome; it changes what the
-executor does with `compatible`.
+Exact identity, where a consumer needs it, is therefore declared, not
+configured: a consumer that names a revision gets `requires-runtime-check`
+from every producer that does not claim it, and the executor verifies
+the artifact before the consumer launches or refuses to launch it. A
+consumer that names no revision has said it accepts any, and a producer
+that names one has said more than was asked. There is no executor
+profile that changes a validator's outcome; two conformant validators
+agree on every binding, and what differs between runtimes is which
+`requires-runtime-check` outcomes they can resolve, which each states
+in its conformance statement.
 
 A runtime that writes a NIfTI artifact whose declared `space` is an
 MNI152 label SHOULD set the sform and qform code to 4
@@ -784,14 +811,16 @@ The work splits by repository. Each item names its owner.
   requirement, adopted as an option: a BIDS space label is a fixed
   coordinate frame by definition (TemplateFlow versions the files, not
   the frame), and most tools cannot state a revision honestly. A label
-  MAY carry one after `@`, and the strict profile lets an executor
-  insist on it.
+  MAY carry one after `@`, and a consumer that declares one gets
+  `requires-runtime-check` from a producer that does not, so it can
+  insist on evidence without forcing every producer to claim a release.
 - **Exact identity for label systems.** The Neurodesk draft requires
   equal name and revision. Rejected as the sole rule: registered tables
   append, so a revision mismatch is a runtime table comparison, not a
-  refusal; the name is the identity and the revision narrows it. The
-  strict profile gives an executor that wants exact identity a way to
-  demand the evidence.
+  refusal; the name is the identity and the revision narrows it. A
+  consumer that declares a revision has the artifact verified against
+  it when the producer does not claim one, which is where exact
+  identity is needed.
 - **A 0.2 schema path**, as the Neurodesk draft proposes. Rejected in
   favour of the `"0.1.1"` envelope value (Specification version): it
   gives the same refusal by older runtimes without copying the schemas
@@ -830,7 +859,8 @@ extension block as migration path; and the open questions on registry
 ownership, revision identifiers and evidence across remote runtimes.
 Reshaped rather than taken: object-valued `space` and `labelSystem`
 (kept as the pair the strings serialize), the mandatory revision
-(optional, with the strict profile), the 0.2 version (the `"0.1.1"`
+(optional on the producer; a consumer that declares one has it verified
+at runtime), the 0.2 version (the `"0.1.1"`
 envelope value), and the absence of a grid qualifier (see Alternatives
 considered). The third revision merges the two drafts into this one
 document.
@@ -859,5 +889,5 @@ document.
   digest of the table.
 - How a remote runtime's declared evidence (observed format, frame,
   table) is authenticated by a consumer that did not produce it.
-- Which inspectors a strict executor must have to resolve
+- Which inspectors an executor must have to resolve
   `requires-runtime-check` on each axis, and how it advertises them.
