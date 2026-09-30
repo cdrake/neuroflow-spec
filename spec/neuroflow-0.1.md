@@ -316,16 +316,17 @@ declarations and planners can insert a conversion between them (RFC 0010).
   produce. Tokens form a two-level hierarchy: `nii`, `nii-gz` and
   `nii-pair` are children of `nifti`; `seg-nrrd` of `nrrd`; the
   `cifti-*` intents of `cifti`; `dicom-seg` of `dicom`; `dseg-tsv` of
-  `tsv`. Other registered tokens include `analyze`, `mgz`, `minc`, `mha`,
-  `mif`, `brik-head`, `ecat`, `npy`, `ome-zarr`, `gifti`,
-  `freesurfer-surface`, `freesurfer-annot`, `freesurfer-label`, `vtk`,
-  `trk`, `tck`, `trx`, `bval-bvec`, `fsl-mat`, `fnirt-coef`,
-  `fnirt-field`, `x5`, `itk-transform`, `displacement-field`,
-  `spm-deformation`, `mrtrix-warp`, `afni-1d`, `lta`, `xfm`,
-  `matlab-mat`, `freesurfer-lut`, `json`, `tsv`, `csv`. RFC 0010 carries
-  the registry with each token's parent and EDAM cross-reference. When
-  `formats` is absent, the value is in the format conventional for its
-  type.
+  `tsv`; `mgz` of `mgh`. Other registered tokens include `analyze`,
+  `minc`, `mha`, `mif`, `brik-head`, `ecat`, `npy`, `ome-zarr`, `gifti`,
+  `freesurfer-surface`, `freesurfer-annot`, `freesurfer-label`, `mz3`,
+  `obj`, `ply`, `stl`, `vtk`, `trk`, `tck`, `trx`, `bval-bvec`, `bval`,
+  `bvec`, `fsl-mat`, `fnirt-coef`, `fnirt-field`, `x5`, `itk-transform`,
+  `displacement-field`, `spm-deformation`, `mrtrix-warp`, `afni-1d`,
+  `lta`, `xfm`, `matlab-mat`, `freesurfer-lut`, `onnx`, `json`, `tsv`,
+  `csv`. A token names a byte or directory layout, not a filename
+  suffix. RFC 0010 carries the registry with each token's parent and
+  EDAM cross-reference. When `formats` is absent, the value is in the
+  format conventional for its type.
 - `space` — the coordinate space of a spatial value. Where BIDS defines a
   `space-<label>` value it MUST be used (`individual`,
   `MNI152NLin2009cAsym`, `MNI152NLin6Asym`, `MNI152Lin`, `fsnative`,
@@ -348,10 +349,13 @@ declarations and planners can insert a conversion between them (RFC 0010).
   `harvard-oxford-cortical`, `harvard-oxford-subcortical`,
   `neuromorphometrics`, `aal`, `lpba40`, `hcp-mmp1`, `binary`, or
   `embedded` for a file that carries its own table), or a URL to a BIDS
-  `dseg.tsv` or FreeSurfer LUT file. A label system is a specific table,
-  not a parcellation: the same parcellation under different integers is a
-  different label system. `labelSystem` MAY appear on `neuro:label-map`,
-  `neuro:probseg`, extension types, and arrays of these.
+  `dseg.tsv` or FreeSurfer LUT file. A registered or vendor-prefixed
+  name MAY carry a table revision after `@` (`freesurfer@7.4.1`); the
+  name is the identity and the revision narrows it. A label system is a
+  specific table, not a parcellation: the same parcellation under
+  different integers is a different label system. `labelSystem` MAY
+  appear on `neuro:label-map`, `neuro:probseg`, extension types, and
+  arrays of these.
 
 Two forms are shared by all five qualifiers:
 
@@ -374,27 +378,45 @@ these. A qualifier on a `core:array<...>` declaration applies to every
 element.
 
 Qualifiers take part in binding type compatibility (§20). For a binding
-from a source declaration to a target declaration, where both sides
-declare the qualifier, after resolving any `inputs.<local-id>` reference
+from a source declaration to a target declaration, each qualifier is an
+axis with one of three outcomes: `compatible` (the declarations prove
+the target's requirement is met), `incompatible` (they prove it is not),
+or `requires-runtime-check` (they cannot decide). A target that omits a
+qualifier imposes nothing on that axis. A source that omits a qualifier
+the target declares, or whose `inputs.<local-id>` reference resolves to
+a declaration without it, is `requires-runtime-check`: unknown is not a
+pass. The binding is `incompatible` if any axis is, else
+`requires-runtime-check` if any axis is, else `compatible`.
+`incompatible` is a validation failure; `requires-runtime-check` is
+reported and left to the executor. Per axis, after resolving references
 through the producing step's bindings:
 
 - `formats`: a source token is accepted by a target token that equals it
-  or is its parent. If no source token equals, is the parent of, or is a
-  child of any target token, the binding is an error; otherwise a source
-  token accepted by no target token is a warning.
-- `space` and `density`: differing labels are an error.
-- `resolution`: differing spacings are an error, a single number being
-  expanded to three, with 0.001 mm tolerance per axis.
-- `labelSystem`: differing values are an error, except that `embedded`
-  against a named system is a warning.
+  or is its parent. Every source token accepted: `compatible`. No source
+  token equal to, parent of, or child of any target token:
+  `incompatible`. Otherwise `requires-runtime-check`.
+- `space`: the same template label is `compatible`; different labels are
+  `incompatible`; two subject-specific labels (`individual`, `fsnative`)
+  are `compatible` only when both trace through bindings to the same
+  workflow input or step output, otherwise `requires-runtime-check`.
+- `resolution`: equal spacings are `compatible`, a single number being
+  expanded to three, with 0.001 mm tolerance per axis; different
+  spacings are `incompatible`.
+- `density`: equal labels are `compatible`; different are `incompatible`.
+- `labelSystem`: the same name is `compatible`, unless both carry a
+  revision and they differ, which is `requires-runtime-check`; different
+  names are `incompatible`, except `embedded` against a named system,
+  which is `requires-runtime-check`.
 
-Comparison of strings is literal and case-sensitive. When either side
-omits a qualifier, or a reference resolves to a declaration without it,
-no check is made for it. A runtime that can act on a mismatch (convert,
-resample, relabel) MAY accept the binding and MUST record the conversion
-in provenance as an activity of its own. A runtime writing a NIfTI
-artifact declared in an MNI152 space SHOULD set its sform and qform codes
-to 4, the only in-band signal FSL and FSLeyes read.
+Comparison of strings is literal and case-sensitive. A strict executor
+MUST resolve every `requires-runtime-check` by inspecting the artifact
+or trusting recorded provenance before launching the consumer, and MUST
+fail with an unresolved-constraint diagnostic when it cannot; a missing
+inspector is not a passed check. A runtime that can act on a mismatch
+(convert, resample, relabel) MAY accept the binding and MUST record the
+conversion in provenance as an activity of its own. A runtime writing a
+NIfTI artifact declared in an MNI152 space SHOULD set its sform and
+qform codes to 4, the only in-band signal FSL and FSLeyes read.
 
 ## 8. References
 
@@ -982,12 +1004,13 @@ validator SHOULD check:
 - tool output existence
 - output mapping target existence
 - binding type compatibility
-- type-qualifier compatibility (§7.1): where both sides of a binding declare
-  `formats`, `space`, `resolution`, `density`, or `labelSystem`, the format
-  tokens are related through the token hierarchy, and the resolved space,
-  resolution, density and label-system values match; a qualifier of the
-  form `inputs.<local-id>` appears only on a tool output and names an
-  input of the same tool
+- type-qualifier compatibility (§7.1): each of `formats`, `space`,
+  `resolution`, `density`, and `labelSystem` on a binding resolves to
+  `compatible`, `incompatible`, or `requires-runtime-check`; an
+  `incompatible` axis fails validation and a `requires-runtime-check`
+  axis is reported for the executor; a qualifier of the form
+  `inputs.<local-id>` appears only on a tool output and names an input
+  of the same tool
 - condition reference validity
 - heuristic source validity
 - heuristic output type compatibility

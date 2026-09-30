@@ -8,7 +8,7 @@
     "image": {
       "type": "neuro:volume",
       "description": "Any head image; SynthStrip is contrast-agnostic.",
-      "formats": ["nifti", "mgz"]
+      "formats": ["nifti", "mgh"]
     },
     "border": {
       "type": "core:number",

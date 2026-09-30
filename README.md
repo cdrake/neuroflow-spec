@@ -45,8 +45,9 @@ Status: pre-1.0 draft, created 2026-05-20.
   adding the `formats`, `space`, `resolution`, `density`, and
   `labelSystem` qualifiers to type declarations, with a format token
   registry, BIDS space labels, vendor prefixes, `inputs.<id>` inheritance
-  and binding compatibility rules; adopted from the Neurodesk Webapps
-  `automation.json` contracts and revised after the survey below.
+  and three-outcome binding compatibility rules; adopted from the
+  Neurodesk Webapps `automation.json` contracts, revised after the survey
+  below, and reconciled with the Neurodesk draft in neurodesk/webapps#107.
 - [docs/type-qualifiers-survey.md](docs/type-qualifiers-survey.md): survey
   of how workflow languages (CWL, Galaxy, Boutiques, Pydra), vocabularies
   (BIDS, TemplateFlow, EDAM, NIDM, DICOM) and packages (AFNI, SPM, FSL,

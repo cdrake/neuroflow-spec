@@ -4,7 +4,9 @@ Status: Proposed
 
 Created: 2026-09-29
 
-Revised: 2026-09-29 (after the [prior-art survey](../docs/type-qualifiers-survey.md))
+Revised: 2026-09-29 (after the [prior-art survey](../docs/type-qualifiers-survey.md));
+2026-09-30 (reconciled with the Neurodesk draft in
+[neurodesk/webapps#107](https://github.com/neurodesk/webapps/pull/107))
 
 ## Summary
 
@@ -29,6 +31,14 @@ from such a contract carries them without loss. `resolution` and
 ANTs, MRtrix3, Connectome Workbench, 3D Slicer and the BIDS,
 TemplateFlow, CWL and Galaxy vocabularies express the same facts; the
 survey is in [docs/type-qualifiers-survey.md](../docs/type-qualifiers-survey.md).
+The second revision reconciles this RFC with the draft Steffen Bollmann
+wrote for the Neurodesk contract generator
+([neurodesk/webapps#107](https://github.com/neurodesk/webapps/pull/107)):
+three compatibility outcomes instead of error-or-warning, the rule that
+an unknown source value is not a pass, subject identity for `individual`
+spaces, the executor's obligation to resolve or fail, a conformance
+table, table revisions on label systems, and a migration path for
+contracts whose annotations are not yet portable.
 
 The companion specification text lives in
 [spec/neuroflow-0.1.md §7.1](../spec/neuroflow-0.1.md). Schema changes
@@ -181,6 +191,13 @@ packaging says `["nifti"]`; SPM, which cannot read a gzip-compressed
 file, says `["nii", "nii-pair"]`; a tool that always writes `.nii.gz`
 says `["nii-gz"]`.
 
+A token names a byte layout or a directory layout, not a filename
+suffix. A consumer that needs uncompressed bytes says `nii`; it does
+not infer that from `.nii`, and a validator that cannot open the file
+decides from the suffix only where the token defines one. A category
+is not a token: `surface` and `volume` are types, and a declaration
+that means "any surface format the tool reads" lists the tokens.
+
 | Token | Parent | Encoding | Typical types | EDAM |
 | --- | --- | --- | --- | --- |
 | `nifti` | | NIfTI-1 or NIfTI-2 in any packaging | `neuro:volume`, `neuro:mask`, `neuro:label-map`, `neuro:statmap`, `neuro:probseg` | `format_3549` |
@@ -188,7 +205,8 @@ says `["nii-gz"]`.
 | `nii-gz` | `nifti` | gzip-compressed `.nii.gz` | same | |
 | `nii-pair` | `nifti` | NIfTI `.hdr`/`.img` pair, plain or gzip | same | |
 | `analyze` | | Analyze 7.5 `.hdr`/`.img` pair (not NIfTI) | same | |
-| `mgz` | | FreeSurfer MGH `.mgh` or gzip-compressed `.mgz` | same | |
+| `mgh` | | FreeSurfer MGH in any packaging | same | |
+| `mgz` | `mgh` | gzip-compressed MGH `.mgz` | same | |
 | `nrrd` | | NRRD, single file or detached `.nhdr` | same | `format_3551` |
 | `seg-nrrd` | `nrrd` | 3D Slicer segmentation NRRD with per-segment header keys | `neuro:label-map` | |
 | `minc` | | MINC 2 | volumes | |
@@ -204,6 +222,10 @@ says `["nii-gz"]`.
 | `freesurfer-surface` | | FreeSurfer binary triangle surface | `neuro:surface` | |
 | `freesurfer-annot` | | FreeSurfer `.annot` with embedded color table | `neuro:surface`, `neuro:label-map` | |
 | `freesurfer-label` | | FreeSurfer `.label` vertex list | `neuro:surface`, `neuro:mask` | |
+| `mz3` | | Surf-Ice MZ3 mesh, plain or gzip | `neuro:surface` | |
+| `obj` | | Wavefront OBJ mesh | `neuro:surface` | |
+| `ply` | | Stanford PLY mesh | `neuro:surface` | |
+| `stl` | | STL triangle mesh, ASCII or binary | `neuro:surface` | |
 | `vtk` | | legacy VTK polydata or structured points | `neuro:surface`, `neuro:volume` | |
 | `cifti` | | CIFTI-2, any intent | `neuro:cifti` | |
 | `cifti-dtseries` | `cifti` | intent 3002 dense time series | `neuro:cifti` | |
@@ -217,6 +239,8 @@ says `["nii-gz"]`.
 | `tck` | | MRtrix streamlines | `neuro:tract` | |
 | `trx` | | TRX streamlines (zip or directory) | `neuro:tract` | |
 | `bval-bvec` | | FSL `.bval` and `.bvec` pair | `neuro:gradient-table` | |
+| `bval` | | FSL `.bval` b-values text | `neuro:gradient-table`, `core:file` | |
+| `bvec` | | FSL `.bvec` gradient directions text | `neuro:gradient-table`, `core:file` | |
 | `fsl-mat` | | FLIRT 4×4 text matrix in FSL scaled-voxel coordinates | `neuro:transform` | |
 | `fnirt-coef` | | FNIRT spline coefficient NIfTI (intents 2007 to 2009) | `neuro:transform` | |
 | `fnirt-field` | | FNIRT displacement field NIfTI (intent 2006) | `neuro:transform` | |
@@ -230,6 +254,7 @@ says `["nii-gz"]`.
 | `xfm` | | MNI `.xfm` text transform | `neuro:transform` | |
 | `matlab-mat` | | MATLAB MAT-file (SPM `*_seg8.mat`, `*_sn.mat`) | `core:file` | `format_3626` |
 | `freesurfer-lut` | | FreeSurfer color lookup table text | `core:tabular` | |
+| `onnx` | | ONNX model graph | `core:file` | |
 | `dseg-tsv` | `tsv` | BIDS `dseg.tsv` label table | `core:tabular`, `bids:*-table` | |
 | `json` | | JSON text | `core:json`, `core:object`, `bids:sidecar` | `format_3464` |
 | `tsv` | | Tab-separated values with header row | `core:tabular`, `bids:*-table` | `format_3475` |
@@ -283,6 +308,17 @@ A space label says nothing about the voxel grid: `individual` does not
 imply the acquisition resolution and `MNI152NLin2009cAsym` does not
 imply 1 mm. That is what `resolution` is for.
 
+A subject-specific label (`individual`, `fsnative`) identifies a kind
+of space, not one subject's frame. Two values both declared
+`individual` share a frame only if they descend from the same
+acquisition, which the label cannot say and the binding graph can. A
+validator therefore treats two `individual` declarations as compatible
+only when it can trace both, through `inputs.<local-id>` references
+and workflow bindings, to the same workflow input or the same step
+output. When it cannot, the outcome is `requires-runtime-check` (see
+Compatibility rules), never a pass. Template labels have no such
+problem: every `MNI152NLin2009cAsym` is the same frame.
+
 `space` MAY appear on `neuro:volume`, `neuro:mask`, `neuro:label-map`,
 `neuro:statmap`, `neuro:probseg`, `neuro:surface`, `neuro:tract`,
 `neuro:cifti`, and on arrays of them. A validator MUST reject it on any
@@ -304,6 +340,12 @@ declares the grid it produces; a tool that keeps the input grid writes
 `resolution` MAY appear on `neuro:volume`, `neuro:mask`,
 `neuro:label-map`, `neuro:statmap`, `neuro:probseg`, and arrays of
 them. A validator MUST reject it on any other spec-defined type.
+
+Equal `space` and equal `resolution` establish a shared frame and
+spacing, not voxelwise correspondence: origin, shape and axis order
+can still differ. A tool that needs voxel-for-voxel alignment between
+two inputs verifies the grids at runtime; this RFC does not add a grid
+predicate.
 
 `density` is the vertex count of a surface mesh as a BIDS `den-<label>`
 value: `32k`, `59k`, `164k` for `fsLR`; `10k`, `41k`, `164k` for the
@@ -349,6 +391,14 @@ registered value resolves to the table named in its row; a later
 revision may publish `dseg.tsv` copies of the registered tables with
 the spec.
 
+A registered or vendor-prefixed value MAY carry a table revision after
+`@` (`freesurfer@7.4.1`, `neurodesk:mindgrab-16chan18cls@1`), naming
+the release of the table. The name is the identity: a registered table
+does not change the meaning of an integer between revisions, it
+appends. A revision narrows the claim for a consumer that depends on
+entries added later, and lets a runtime compare two tables rather than
+two names.
+
 `labelSystem` MAY appear on `neuro:label-map` and `neuro:probseg` and
 on arrays of them. A validator MUST reject it on any other spec-defined
 type.
@@ -358,35 +408,56 @@ type.
 Qualifiers extend the binding type compatibility check in §20. For a
 binding from a source declaration S (a workflow input, a context field,
 or a step output resolved through its tool) to a target declaration T
-(a tool input, or a workflow output):
+(a tool input, or a workflow output), each qualifier is an axis with
+one of three outcomes:
+
+- `compatible`: the declarations prove the target's requirement is met.
+- `incompatible`: the declarations prove it is not.
+- `requires-runtime-check`: the declarations cannot decide. The target
+  constrains the axis and the source's value is absent, unresolved, or
+  only partly covered.
+
+Type compatibility runs first; qualifiers cannot make two incompatible
+types compatible. A target that omits a qualifier imposes nothing on
+that axis, and the axis is `compatible`. A source that omits a
+qualifier the target declares is `requires-runtime-check`: unknown is
+not a pass. The binding's outcome is `incompatible` if any axis is,
+otherwise `requires-runtime-check` if any axis is, otherwise
+`compatible`. `incompatible` is a validation failure;
+`requires-runtime-check` is reported and handed to the executor.
+
+Per axis, after resolving any `inputs.<local-id>` reference:
 
 - **`formats`.** A source token *s* is accepted by a target token *t*
   when *s* = *t* or *t* is an ancestor of *s* (a target that reads any
   `nifti` accepts a `nii-gz` source). The two are *related* when either
-  is an ancestor of the other. If no source token is related to any
-  target token, the binding is an error. Otherwise, if some source
-  token is not accepted by any target token, the binding is a warning:
-  the tool may produce a packaging the consumer cannot read (a `nifti`
-  source into an SPM `nii` target). If either side omits `formats`, no
-  check is made. Unregistered tokens have no ancestors.
-- **`space`.** If both declare `space` and the resolved labels differ,
-  the binding is an error.
-- **`resolution`.** If both declare it and the resolved values differ,
-  the binding is an error. A single number is expanded to three before
-  comparison, and two spacings are equal when each axis differs by
-  less than 0.001 mm.
-- **`density`.** If both declare it and the resolved labels differ, the
-  binding is an error.
-- **`labelSystem`.** If both declare it and the resolved values differ,
-  the binding is an error, except that `embedded` against a named
-  system is a warning: the runtime can read the file's table and
-  compare it, a static validator cannot.
+  is an ancestor of the other. Every source token accepted:
+  `compatible`. No source token related to any target token:
+  `incompatible`. Otherwise `requires-runtime-check`: the tool may
+  produce a packaging the consumer cannot read (a `nifti` source into
+  an SPM `nii` target), and the runtime looks at the actual file.
+  Unregistered tokens have no ancestors.
+- **`space`.** Both resolve to the same template label: `compatible`.
+  Different labels: `incompatible`. Both a subject-specific label:
+  `compatible` when the validator traces both to the same workflow
+  input or step output, otherwise `requires-runtime-check`.
+- **`resolution`.** Equal: `compatible`; different: `incompatible`. A
+  single number is expanded to three before comparison, and two
+  spacings are equal when each axis differs by less than 0.001 mm.
+- **`density`.** Equal labels: `compatible`; different:
+  `incompatible`.
+- **`labelSystem`.** Same name: `compatible`, except that when both
+  carry a revision and the revisions differ the axis is
+  `requires-runtime-check` and the runtime compares the tables; a
+  revision on one side only does not change the outcome. Different
+  names: `incompatible`, except that `embedded` against a named system
+  is `requires-runtime-check`: the runtime can read the file's table
+  and compare it, a static validator cannot.
 
 A source `inputs.<id>` reference resolves to the qualifier of whatever
 the workflow binds to that input on the producing step, recursively; a
 reference that resolves to an input with no such qualifier is treated
-as absent. If either side omits a qualifier, or resolves to absent, no
-check is made for it.
+as absent.
 
 String comparison is literal and case-sensitive. A validator MUST NOT
 treat two labels it believes to be synonyms (`native` and
@@ -395,13 +466,56 @@ treat two labels it believes to be synonyms (`native` and
 that authors converge on one spelling, and the vendor prefix exists so
 that a name that cannot converge is at least unambiguous.
 
+A diagnostic for either non-compatible outcome names the binding, the
+qualifier, the target's requirement, the source's declared or resolved
+value, and, where the registry knows one, a repair: the conversion,
+resampling or relabelling that would satisfy the target. The repair is
+a suggestion about formats and frames, not about science: a converted
+value that satisfies the constraint is not thereby the right input.
+
 A runtime MAY relax these rules when it can act on the mismatch: a
 runtime that can convert MGZ to NIfTI, resample into a target space or
 grid, or renumber a label map, MAY accept the binding and MUST record
 the conversion in provenance as its own activity. Static validators
 report; they do not convert.
 
+## Conformance cases
+
+| Source declaration | Target declaration | Outcome |
+| --- | --- | --- |
+| `formats: ["mgz"]` | `formats: ["nifti"]` | `incompatible` |
+| `formats: ["nii-gz"]` | `formats: ["nifti"]` | `compatible` |
+| `formats: ["nifti"]` | `formats: ["nii"]` | `requires-runtime-check` |
+| `formats: ["nifti", "mgh"]` | `formats: ["nifti"]` | `requires-runtime-check` |
+| no `formats` | `formats: ["nifti"]` | `requires-runtime-check` |
+| any `formats` | no `formats` | `compatible` |
+| `space: "MNI152NLin6Asym"` | `space: "MNI152NLin2009cAsym"` | `incompatible` |
+| `space: "inputs.image"`, resolving to workflow input `t1` | `space: "inputs.image"` on another step, also resolving to `t1` | `compatible` |
+| `space: "individual"` from workflow input `a` | `space: "individual"` from workflow input `b` | `requires-runtime-check` |
+| `space: "MNI152NLin2009cAsym"`, `resolution: 2` | same space, `resolution: 1` | `incompatible` |
+| same `space` and `resolution` | a target that needs voxelwise correspondence with another input | `compatible`; the grid is verified at runtime |
+| `labelSystem: "freesurfer@7.3.2"` | `labelSystem: "freesurfer@7.4.1"` | `requires-runtime-check` |
+| `labelSystem: "freesurfer"` | `labelSystem: "mrtrix-fs-default"` | `incompatible` |
+| `labelSystem: "embedded"` | `labelSystem: "freesurfer"` | `requires-runtime-check` |
+| `neuro:surface`, `formats: ["gifti"]` | `neuro:volume`, `formats: ["gifti"]` | `incompatible` (type) |
+
+Schema fixtures in `examples/invalid/` cover the syntactic half: empty
+and malformed token lists, values with reserved prefixes, a reference
+that is not `inputs.<id>`, a zero spacing, a revision with no name,
+and each qualifier on a type that cannot carry it.
+
 ## Runtime guidance
+
+A strict executor MUST resolve every `requires-runtime-check` outcome
+before launching the consuming step: by reading the artifact (its
+header, a format reader, an embedded label table), or by trusting
+provenance that records the value. If it cannot establish the fact, it
+MUST fail with an unresolved-constraint diagnostic rather than launch.
+An editor or planner MAY display such a workflow and MUST distinguish
+a conditionally valid plan from a runnable one. A matching affine alone
+does not establish that two `individual` values come from the same
+subject; provenance does. A runtime SHOULD state which inspectors it
+has, and MUST NOT treat a missing inspector as a passed check.
 
 A runtime that writes a NIfTI artifact whose declared `space` is an
 MNI152 label SHOULD set the sform and qform code to 4
@@ -436,8 +550,10 @@ A validator MUST check:
   `bids`, or `prov`.
 - A qualifier of the form `inputs.<local-id>` appears only on a tool
   output and names an input declared on the same tool.
-- Binding compatibility per the rules above, where both sides declare
-  the qualifier.
+- A `labelSystem` revision, when present, follows a name and is
+  non-empty.
+- Binding compatibility per the rules above: an `incompatible` axis is
+  a validation failure, a `requires-runtime-check` axis is reported.
 
 All but the last two rules are expressed in the JSON Schema; the last
 two are semantic rules for §20.
@@ -469,6 +585,40 @@ two are semantic rules for §20.
   is an implementation choice. The declaration is a contract, and the
   validator checks contracts against each other.
 
+## Migration
+
+- An unqualified document remains valid and means what it meant.
+- A qualified document is rejected by a validator that predates this
+  RFC, because `typeDeclaration` and `toolOutputDef` are closed
+  objects. That is the intended behaviour: an older runtime refuses a
+  document whose execution requirements it cannot read instead of
+  ignoring them.
+- The qualifiers ship in the 0.1 schemas. The README's compatibility
+  policy classes adding optional fields as non-breaking; whether the
+  schema `$id`s should move to a 0.2 path instead is an open issue
+  below.
+- An adapter that generates tool documents from another contract
+  format (the Neurodesk generator in neurodesk/webapps#107) MAY keep
+  the source's own annotations in an extension block
+  (`extensions["neurodesk/data"]`) and promote a value to a qualifier
+  only once it maps onto a registered token, a BIDS label, a
+  vendor-prefixed value, or an `inputs.<local-id>` reference. Core
+  validators do not read extension blocks (§18), so an annotation left
+  there is documentation, not a constraint, and neither the generator
+  nor a validator may report it as checked.
+
+For the strings in the Neurodesk contracts at the time of writing, the
+mapping is: `native` to `individual`; `input` to `inputs.<id>` where
+the operation has one spatial input, otherwise the app owner names the
+input; `fixed` and `moving` to `inputs.fixed` and `inputs.moving`;
+`subject-1mm` to `inputs.<id>` plus `resolution: 1`; `FreeSurfer` to
+`freesurfer`; `gii` to `gifti`; `surface` to the list of tokens the app
+reads. `MNI152-1mm`, `atlas`, `analysis`, `lesion-reference`, `RAS-mm`,
+`scanner-RAS-mm` and `registration-sphere` need the app owner to name
+the template or the input they mean, or stay as `neurodesk:<value>`;
+`moving-to-fixed` on a `neuro:transform` stays in the extension until
+the transform RFC.
+
 ## Alternatives considered
 
 - **Encode the format in the type name** (`neuro:nifti-volume`,
@@ -499,6 +649,20 @@ two are semantic rules for §20.
   grammar and the parser validators already have, and keeps `space` a
   string in every position. The same string form now serves all five
   qualifiers.
+- **Object-valued qualifiers** (`{ "kind": "relative", "input":
+  "image" }`, `{ "id": ..., "version": ... }`), as the Neurodesk draft
+  proposes. Rejected for now: the relative form is one-to-one with
+  `inputs.<id>`, a revision fits after `@`, and a string compares,
+  sorts and greps without a parser. An object form can be added later
+  as another branch of the same schema without invalidating a string.
+- **A mandatory revision on every named space.** Rejected: a BIDS
+  space label is a fixed coordinate frame by definition (TemplateFlow
+  versions the files, not the frame), and a vendor-prefixed label can
+  carry a revision in its value.
+- **Exact identity for label systems.** The Neurodesk draft requires
+  equal name and revision. Rejected as the sole rule: registered tables
+  append, so a revision mismatch is a runtime table comparison, not a
+  refusal; the name is the identity and the revision narrows it.
 - **A `res-<label>` keyword for resolution, as BIDS uses.** Rejected:
   BIDS resolves the keyword through a `Resolution` sidecar field that a
   tool document has no place for, and every package the survey looked
@@ -519,6 +683,22 @@ qualifier, the enlarged token registry with EDAM cross-references, the
 template crosswalk, label systems defined as integer tables with
 `embedded`, `resolution`, `density`, and the xform-code guidance.
 
+Steffen Bollmann's draft for the same qualifiers
+(`docs/rfcs/0010-neuroflow-data-constraints.md` in
+[neurodesk/webapps#107](https://github.com/neurodesk/webapps/pull/107)),
+written against the Neurodesk contract generator, was reconciled into
+the second revision. Taken from it: the three compatibility outcomes
+and the rule that an unknown source value is not a pass; the executor's
+obligation to resolve or fail, and the editor's to tell a conditional
+plan from a runnable one; that a subject-specific label does not
+identify a subject; that a token names bytes or a layout, not a
+suffix; the conformance table; revisions on label systems; the
+extension block as migration path; and the open questions on registry
+ownership, revision identifiers and evidence across remote runtimes.
+Not taken: object-valued `space` and `labelSystem`, a mandatory
+revision on every named space, and the absence of a grid qualifier
+(see Alternatives considered).
+
 ## Open issues
 
 - Should `formats` be allowed on `core:file` and `core:directory`,
@@ -537,3 +717,16 @@ template crosswalk, label systems defined as integer tables with
 - Whether the spec should publish `dseg.tsv` files for the registered
   label systems, and under what licence, given that several are
   derived from package data files.
+- Whether the qualifiers should be published under a 0.2 schema path
+  rather than added to 0.1 in place. The README policy and the closed
+  declaration objects argue for in place; the Neurodesk draft asks for
+  a new version so that no published schema changes under a pinned
+  snapshot.
+- Registry ownership: who admits a format token, a space label outside
+  BIDS, or a label system, and where the tables live.
+- Whether a label-system revision is a release string, as here, or a
+  digest of the table.
+- How a remote runtime's declared evidence (observed format, frame,
+  table) is authenticated by a consumer that did not produce it.
+- Which inspectors a strict executor must have to resolve
+  `requires-runtime-check` on each axis, and how it advertises them.

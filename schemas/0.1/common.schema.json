@@ -228,9 +228,9 @@
       ]
     },
     "labelSystem": {
-      "description": "Type qualifier (RFC 0010): the integer table that gives meaning to a label map (freesurfer, mrtrix-fs-default, fsl-fast, harvard-oxford-cortical, binary, embedded, ...), a vendor-prefixed name, a URL to a dseg.tsv or FreeSurfer LUT file, or on a tool output inputs.<local-id>.",
+      "description": "Type qualifier (RFC 0010): the integer table that gives meaning to a label map (freesurfer, mrtrix-fs-default, fsl-fast, harvard-oxford-cortical, binary, embedded, ...), optionally with a table revision after @ (freesurfer@7.4.1), a vendor-prefixed name, a URL to a dseg.tsv or FreeSurfer LUT file, or on a tool output inputs.<local-id>.",
       "anyOf": [
-        { "type": "string", "pattern": "^(?:(?!(?:core|neuro|bids|prov):)[a-z][a-z0-9.-]*:)?[A-Za-z0-9][A-Za-z0-9_-]*$" },
+        { "type": "string", "pattern": "^(?:(?!(?:core|neuro|bids|prov):)[a-z][a-z0-9.-]*:)?[A-Za-z0-9][A-Za-z0-9_-]*(?:@[A-Za-z0-9][A-Za-z0-9._-]*)?$" },
         { "type": "string", "pattern": "^https?://\\S+$" },
         { "$ref": "#/$defs/qualifierInputRef" }
       ]

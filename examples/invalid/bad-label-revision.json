@@ -1,0 +1,15 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-label-revision",
+  "version": "1.0.0",
+  "description": "labelSystem with a revision separator and no revision after it (RFC 0010).",
+  "inputs": {},
+  "outputs": {
+    "labels": {
+      "type": "neuro:label-map",
+      "description": "Segmentation.",
+      "labelSystem": "freesurfer@"
+    }
+  }
+}
