@@ -2,7 +2,7 @@
 
 Status: Proposed
 
-Authors: Chris Drake (NiiVue); Steffen Bollmann (Neurodesk), whose draft
+Authors: Chris Drake, Chris Rorden, Taylor Hanayik (NiiVue); Steffen Bollmann (Neurodesk), whose draft
 in [neurodesk/webapps#107](https://github.com/neurodesk/webapps/pull/107)
 this RFC absorbs (co-authorship confirmed on 2026-10-02)
 
