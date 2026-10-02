@@ -1,0 +1,15 @@
+{
+  "neuroflow": "0.1.1",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-reserved-prefix",
+  "version": "1.0.0",
+  "description": "A reserved namespace used as a vendor prefix on a space label (RFC 0010).",
+  "inputs": {
+    "value": {
+      "type": "neuro:volume",
+      "description": "Test input.",
+      "space": "neuro:MNI152NLin6Asym"
+    }
+  },
+  "outputs": {}
+}

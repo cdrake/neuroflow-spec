@@ -1,0 +1,15 @@
+{
+  "neuroflow": "0.1.1",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-resolution-value",
+  "version": "1.0.0",
+  "description": "A non-positive resolution (RFC 0010).",
+  "inputs": {
+    "value": {
+      "type": "neuro:volume",
+      "description": "Test input.",
+      "resolution": [1, 0, 1]
+    }
+  },
+  "outputs": {}
+}

@@ -60,6 +60,38 @@ const report = (ok, label, detail) => {
 // Pick a validator from a document's `kind` field.
 const validatorFor = (doc) => validators[doc && doc.kind]
 
+// RFC 0010, "Specification version": a document that carries any type
+// qualifier must declare neuroflow 0.1.1. JSON Schema cannot reach the nested
+// declarations from the envelope, so this is a semantic rule.
+const QUALIFIERS = ['formats', 'space', 'resolution', 'density', 'labelSystem']
+const findQualifier = (node, path = '') => {
+  if (Array.isArray(node)) {
+    for (const [i, item] of node.entries()) {
+      const hit = findQualifier(item, `${path}/${i}`)
+      if (hit) return hit
+    }
+    return null
+  }
+  if (!node || typeof node !== 'object') return null
+  if (typeof node.type === 'string') {
+    const key = QUALIFIERS.find((q) => q in node)
+    if (key) return `${path}/${key}`
+  }
+  for (const [key, value] of Object.entries(node)) {
+    if (key === 'extensions') continue
+    const hit = findQualifier(value, `${path}/${key}`)
+    if (hit) return hit
+  }
+  return null
+}
+const versionErrors = (doc) => {
+  const hit = findQualifier(doc)
+  if (hit && doc.neuroflow !== '0.1.1') {
+    return [`${hit}: a document with type qualifiers must declare neuroflow 0.1.1 (found ${JSON.stringify(doc.neuroflow)})`]
+  }
+  return []
+}
+
 console.log('Valid examples (expect pass):')
 const examplesDir = join(root, 'examples')
 for (const name of readdirSync(examplesDir)) {
@@ -71,7 +103,9 @@ for (const name of readdirSync(examplesDir)) {
     continue
   }
   const ok = validate(doc)
-  report(ok, name, ok ? '' : ajv.errorsText(validate.errors, { separator: '\n        ' }))
+  const semantic = ok ? versionErrors(doc) : []
+  report(ok && semantic.length === 0, name,
+    ok ? semantic.join('\n        ') : ajv.errorsText(validate.errors, { separator: '\n        ' }))
 }
 
 console.log('\nInvalid examples (expect rejection):')
@@ -81,7 +115,7 @@ if (existsSync(invalidDir)) {
     if (!name.endsWith('.json')) continue
     const doc = JSON.parse(readFileSync(join(invalidDir, name), 'utf8'))
     const validate = validatorFor(doc) || validators.workflow
-    const ok = validate(doc)
+    const ok = validate(doc) && versionErrors(doc).length === 0
     // A correct outcome here is rejection.
     report(!ok, name, ok ? 'document was accepted but should have been rejected' : '')
   }

@@ -1,0 +1,45 @@
+{
+  "neuroflow": "0.1.1",
+  "kind": "tool",
+  "id": "neuroflow.examples/synthstrip",
+  "version": "1.0.0",
+  "description": "Skull stripping that keeps the input's format, space and grid. Exercises the RFC 0010 inputs.<id> form on every qualifier of a pass-through output, the vendor-prefixed form, and the binary label system on a mask.",
+  "inputs": {
+    "image": {
+      "type": "neuro:volume",
+      "description": "Any head image; SynthStrip is contrast-agnostic.",
+      "formats": ["nifti", "mgh"]
+    },
+    "border": {
+      "type": "core:number",
+      "description": "Mask border in millimetres.",
+      "default": 1
+    }
+  },
+  "outputs": {
+    "brain": {
+      "type": "neuro:volume",
+      "description": "The input with non-brain voxels zeroed, written in the input's own format on the input grid.",
+      "formats": "inputs.image",
+      "space": "inputs.image",
+      "resolution": "inputs.image",
+      "delivery": { "mode": "core:result-dir", "path": "brain.nii.gz" }
+    },
+    "mask": {
+      "type": "neuro:mask",
+      "description": "Binary brain mask on the input grid.",
+      "formats": ["nii-gz"],
+      "space": "inputs.image",
+      "resolution": "inputs.image",
+      "delivery": { "mode": "core:result-dir", "path": "mask.nii.gz" }
+    },
+    "qc": {
+      "type": "neuro:volume",
+      "description": "A low-resolution preview resampled to a vendor-named space for a QA page.",
+      "formats": ["nii-gz"],
+      "space": "afni:MNI_ANAT",
+      "resolution": [2, 2, 2],
+      "delivery": { "mode": "core:result-dir", "path": "qc.nii.gz" }
+    }
+  }
+}

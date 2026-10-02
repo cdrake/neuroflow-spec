@@ -176,7 +176,10 @@ Every NeuroFlow document uses a common envelope:
 ```
 
 `neuroflow` identifies the specification version used by the document. For this
-draft it MUST be `0.1.0`.
+draft it MUST be `0.1.0`, or `0.1.1` for a document that carries any of the
+type qualifiers of §7.1 (RFC 0010). A validator built for `0.1.0` rejects a
+`0.1.1` document; that is intended, since the qualifiers are execution
+requirements it cannot check.
 
 `kind` identifies the document family and MUST be `workflow`, `tool`,
 `heuristic`, or `provenance`.
@@ -291,7 +294,139 @@ Array values use the container form `core:array<element-type>`, for example
 `core:array<neuro:volume>` or `core:array<core:string>`.
 
 Type declarations MAY include `description`, `optional`, `default`, `enum`,
-`min`, `max`, `label`, and `extensions`.
+`min`, `max`, `label`, `extensions`, and the type qualifiers `formats`,
+`space`, `resolution`, `density`, and `labelSystem`.
+
+### 7.1 Type Qualifiers
+
+A qualified type names a concept; a type qualifier narrows how a value of
+that type is encoded or situated, so that validators can compare two
+declarations and planners can insert a conversion between them (RFC 0010).
+A document that carries any qualifier declares `"neuroflow": "0.1.1"` (§5).
+
+```json
+{
+  "type": "neuro:label-map",
+  "description": "Whole-brain segmentation on a 1 mm grid.",
+  "formats": ["nii-gz"],
+  "space": "inputs.image",
+  "resolution": 1,
+  "labelSystem": "freesurfer"
+}
+```
+
+- `formats` — array of format tokens, non-empty, no duplicates. On an
+  input, the formats the tool accepts; on an output, the formats it may
+  produce. Tokens form a two-level hierarchy: `nii`, `nii-gz` and
+  `nii-pair` are children of `nifti`; `seg-nrrd` of `nrrd`; the
+  `cifti-*` intents of `cifti`; `dicom-seg` of `dicom`; `dseg-tsv` of
+  `tsv`; `mgz` of `mgh`. Other registered tokens include `analyze`,
+  `minc`, `mha`, `mif`, `brik-head`, `ecat`, `npy`, `ome-zarr`, `gifti`,
+  `freesurfer-surface`, `freesurfer-annot`, `freesurfer-label`, `mz3`,
+  `obj`, `ply`, `stl`, `vtk`, `trk`, `tck`, `trx`, `bval-bvec`, `bval`,
+  `bvec`, `fsl-mat`, `fnirt-coef`, `fnirt-field`, `x5`, `itk-transform`,
+  `displacement-field`, `spm-deformation`, `mrtrix-warp`, `afni-1d`,
+  `lta`, `xfm`, `matlab-mat`, `freesurfer-lut`, `onnx`, `json`, `tsv`,
+  `csv`. A token names a byte or directory layout, not a filename
+  suffix. RFC 0010 carries the registry with each token's parent and
+  EDAM cross-reference. When `formats` is absent, the value is in the
+  format conventional for its type.
+- `space` — the coordinate space of a spatial value. Where BIDS defines a
+  `space-<label>` value it MUST be used (`individual`,
+  `MNI152NLin2009cAsym`, `MNI152NLin6Asym`, `MNI152Lin`, `fsnative`,
+  `fsaverage`, `fsLR`, ...). A label MAY carry a template revision after
+  `@` (`neurodesk:atlas@2`). A space label says nothing about the grid.
+  `space` MAY appear on `neuro:volume`, `neuro:mask`, `neuro:label-map`,
+  `neuro:statmap`, `neuro:probseg`, `neuro:surface`, `neuro:tract`,
+  `neuro:cifti`, extension types, and arrays of these; a validator MUST
+  reject it elsewhere, including on `neuro:transform`.
+- `resolution` — voxel spacing in millimetres: one positive number for an
+  isotropic grid, or three in axis order. `resolution` MAY appear on
+  `neuro:volume`, `neuro:mask`, `neuro:label-map`, `neuro:statmap`,
+  `neuro:probseg`, extension types, and arrays of these.
+- `density` — surface mesh density as a BIDS `den-<label>` value (`32k`,
+  `59k`, `164k`, `41k`, ...). `density` MAY appear on `neuro:surface`,
+  `neuro:cifti`, extension types, and arrays of these.
+- `labelSystem` — the integer table that gives meaning to the values of a
+  label map, or the volume order of a probabilistic segmentation: a
+  registered name (`freesurfer`, `mrtrix-fs-default`, `mrtrix-hcpmmp1`,
+  `mrtrix-5tt`, `fsl-fast`, `spm-tpm`, `ants-atropos-6`,
+  `harvard-oxford-cortical`, `harvard-oxford-subcortical`,
+  `neuromorphometrics`, `aal`, `lpba40`, `hcp-mmp1`, `binary`, or
+  `embedded` for a file that carries its own table), or a URL to a BIDS
+  `dseg.tsv` or FreeSurfer LUT file. A registered or vendor-prefixed
+  name MAY carry a table revision after `@` (`freesurfer@7.4.1`); the
+  name is the identity and the revision narrows it. A label system is a
+  specific table, not a parcellation: the same parcellation under
+  different integers is a different label system. `labelSystem` MAY
+  appear on `neuro:label-map`, `neuro:probseg`, extension types, and
+  arrays of these.
+
+Two forms are shared by all five qualifiers:
+
+- **Inheritance from an input.** On a tool output only, a qualifier may be
+  the string `inputs.<local-id>`, declaring that the output has the same
+  value of that qualifier as the named input of the same tool, whatever
+  it turns out to be. A brain extractor writes `"formats": "inputs.image"`,
+  `"space": "inputs.image"`, `"resolution": "inputs.image"`.
+- **Vendor prefixes.** Every qualifier vocabulary is open. A value that is
+  neither a registered token nor, for `space` and `density`, a BIDS label,
+  SHOULD carry a vendor prefix in the form `<vendor>:<value>`
+  (`afni:MNI_ANAT`, `brainvoyager:vmr`, `neurodesk:subject-1mm`). The
+  prefixes `core`, `neuro`, `bids`, and `prov` are reserved and a
+  validator MUST reject them. Unregistered values are preserved and
+  compared literally; a validator MUST NOT reject them.
+
+None of the five qualifiers may appear on `core:string`, `core:number`,
+`core:integer`, `core:boolean`, `core:object`, `core:json`, or arrays of
+these. A qualifier on a `core:array<...>` declaration applies to every
+element.
+
+Qualifiers take part in binding type compatibility (§20). For a binding
+from a source declaration to a target declaration, each qualifier is an
+axis with one of three outcomes: `compatible` (the declarations prove
+the target's requirement is met), `incompatible` (they prove it is not),
+or `requires-runtime-check` (they cannot decide). A target that omits a
+qualifier imposes nothing on that axis. A source that omits a qualifier
+the target declares, or whose `inputs.<local-id>` reference resolves to
+a declaration without it, is `requires-runtime-check`: unknown is not a
+pass. The binding is `incompatible` if any axis is, else
+`requires-runtime-check` if any axis is, else `compatible`.
+`incompatible` is a validation failure; `requires-runtime-check` is
+reported and left to the executor. Per axis, after resolving references
+through the producing step's bindings:
+
+- `formats`: a source token is accepted by a target token that equals it
+  or is its parent. Every source token accepted: `compatible`. No source
+  token equal to, parent of, or child of any target token:
+  `incompatible`. Otherwise `requires-runtime-check`.
+- `space`: the same template label is `compatible`, unless the target
+  carries a revision the source does not, or both carry revisions that
+  differ, which is `requires-runtime-check`; different
+  labels are `incompatible`; two subject-specific labels (`individual`, `fsnative`)
+  are `compatible` only when both trace through bindings to the same
+  workflow input or step output, otherwise `requires-runtime-check`.
+- `resolution`: equal spacings are `compatible`, a single number being
+  expanded to three, with 0.001 mm tolerance per axis; different
+  spacings are `incompatible`.
+- `density`: equal labels are `compatible`; different are `incompatible`.
+- `labelSystem`: the same name is `compatible`, unless the target
+  carries a revision the source does not, or both carry revisions that
+  differ, which is `requires-runtime-check`; different
+  names are `incompatible`, except `embedded` against a named system,
+  which is `requires-runtime-check`.
+
+Comparison of strings is literal and case-sensitive. An executor
+MUST resolve every `requires-runtime-check` by inspecting the artifact
+or trusting recorded provenance before launching the consumer, and MUST
+fail with an unresolved-constraint diagnostic when it cannot; a missing
+inspector is not a passed check. A runtime SHOULD state which
+inspectors it has (RFC 0010 lists the executor conformance cases). A
+runtime that can act on a mismatch
+(convert, resample, relabel) MAY accept the binding and MUST record the
+conversion in provenance as an activity of its own. A runtime writing a
+NIfTI artifact declared in an MNI152 space SHOULD set its sform and
+qform codes to 4, the only in-band signal FSL and FSLeyes read.
 
 ## 8. References
 
@@ -879,6 +1014,14 @@ validator SHOULD check:
 - tool output existence
 - output mapping target existence
 - binding type compatibility
+- type-qualifier compatibility (§7.1): each of `formats`, `space`,
+  `resolution`, `density`, and `labelSystem` on a binding resolves to
+  `compatible`, `incompatible`, or `requires-runtime-check`; an
+  `incompatible` axis fails validation and a `requires-runtime-check`
+  axis is reported for the executor; a qualifier of the form
+  `inputs.<local-id>` appears only on a tool output and names an input
+  of the same tool; a document that carries any qualifier declares
+  `neuroflow` `0.1.1` (§5)
 - condition reference validity
 - heuristic source validity
 - heuristic output type compatibility
@@ -1519,6 +1662,8 @@ standards rather than replace them.
 - Back-pressure and rate-limit semantics for high-volume event streams.
 - Bidirectional event transports beyond `core:websocket` (runtime-to-tool
   control messages such as cancel, pause, resume).
+- Source and target spaces, direction, and coordinate convention for
+  `neuro:transform` (RFC 0010 leaves the transform type unqualified).
 
 ## 27. Workflow Stages
 

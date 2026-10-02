@@ -1,0 +1,15 @@
+{
+  "neuroflow": "0.1.1",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-qualifier",
+  "version": "1.0.0",
+  "description": "A type qualifier on a type that cannot carry it: space on a core:string input (RFC 0010).",
+  "inputs": {
+    "template": {
+      "type": "core:string",
+      "description": "Template name.",
+      "space": "MNI152NLin2009cAsym"
+    }
+  },
+  "outputs": {}
+}

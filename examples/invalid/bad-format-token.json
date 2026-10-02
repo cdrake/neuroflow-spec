@@ -1,0 +1,15 @@
+{
+  "neuroflow": "0.1.1",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-format-token",
+  "version": "1.0.0",
+  "description": "A format token that is not lowercase (RFC 0010).",
+  "inputs": {
+    "value": {
+      "type": "neuro:volume",
+      "description": "Test input.",
+      "formats": ["NIfTI"]
+    }
+  },
+  "outputs": {}
+}
