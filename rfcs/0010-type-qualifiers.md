@@ -346,7 +346,7 @@ BIDS label; an adapter maps from the package's name:
 | `MNI305` | SPM `avg305T1`; FreeSurfer `talairach.xfm` target; NIDM `Mni305` |
 | `MNIColin27` | AFNI `MNI_N27`, `MNI_caez_N27` |
 | `Talairach` | AFNI `TT_N27`, `TLRC`, `TT_Daemon`; DICOM well-known frame of reference `1.2.840.10008.1.4.1.1` |
-| `individual` | FreeSurfer conformed `orig.mgz`; SPM "native"; AFNI `ORIG`; Neurodesk `native` |
+| `individual` | FreeSurfer conformed `orig.mgz`; SPM "native"; AFNI `ORIG` |
 | `fsnative` | FreeSurfer subject surface space |
 | `fsaverage` | FreeSurfer `fsaverage` (with `density` for `fsaverage5`, `fsaverage6`) |
 | `fsLR` | HCP `fs_LR` (with `density` `32k`, `59k`, `164k`) |
