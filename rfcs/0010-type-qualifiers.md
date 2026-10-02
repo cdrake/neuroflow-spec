@@ -4,7 +4,7 @@ Status: Proposed
 
 Authors: Chris Drake (NiiVue); Steffen Bollmann (Neurodesk), whose draft
 in [neurodesk/webapps#107](https://github.com/neurodesk/webapps/pull/107)
-this RFC absorbs (co-authorship proposed, pending his agreement)
+this RFC absorbs (co-authorship confirmed on 2026-10-02)
 
 Created: 2026-09-29
 
@@ -346,7 +346,7 @@ BIDS label; an adapter maps from the package's name:
 | `MNI305` | SPM `avg305T1`; FreeSurfer `talairach.xfm` target; NIDM `Mni305` |
 | `MNIColin27` | AFNI `MNI_N27`, `MNI_caez_N27` |
 | `Talairach` | AFNI `TT_N27`, `TLRC`, `TT_Daemon`; DICOM well-known frame of reference `1.2.840.10008.1.4.1.1` |
-| `individual` | FreeSurfer conformed `orig.mgz`; SPM "native"; AFNI `ORIG`; Neurodesk `native` |
+| `individual` | FreeSurfer conformed `orig.mgz`; SPM "native"; AFNI `ORIG` |
 | `fsnative` | FreeSurfer subject surface space |
 | `fsaverage` | FreeSurfer `fsaverage` (with `density` for `fsaverage5`, `fsaverage6`) |
 | `fsLR` | HCP `fs_LR` (with `density` `32k`, `59k`, `164k`) |
@@ -742,17 +742,42 @@ to a qualifier.
   there is documentation, not a constraint, and neither the generator
   nor a validator may report it as checked.
 
-For the strings in the Neurodesk contracts at the time of writing, the
-mapping is: `native` to `individual`; `input` to `inputs.<id>` where
-the operation has one spatial input, otherwise the app owner names the
-input; `fixed` and `moving` to `inputs.fixed` and `inputs.moving`;
-`subject-1mm` to `inputs.<id>` plus `resolution: 1`; `FreeSurfer` to
-`freesurfer`; `gii` to `gifti`; `surface` to the list of tokens the app
-reads. `MNI152-1mm`, `atlas`, `analysis`, `lesion-reference`, `RAS-mm`,
-`scanner-RAS-mm` and `registration-sphere` need the app owner to name
-the template or the input they mean, or stay as `neurodesk:<value>`;
-`moving-to-fixed` on a `neuro:transform` stays in the extension until
-the transform RFC.
+The Neurodesk source audit gives the following migration rules. Promote an
+annotation only when the app's actual input requirements or output behavior
+supports it. A vendor prefix does not turn an ambiguous label into evidence
+that two artifacts share a coordinate frame.
+
+- `native` on an input remains source metadata when the app also accepts
+  images in template or aligned frames. Brain extraction and SynthSeg do not
+  require scanner coordinates. On an output, `native` or `input` can inherit
+  the identified source input's frame with `inputs.<id>`.
+- `fixed` and `moving` on outputs inherit those inputs' frames. The source
+  input must be spatial. A collection of independent images does not promise
+  one shared subject frame.
+- `subject-1mm` adds `resolution: 1` and inherits the identified source frame.
+  If several spatial inputs exist, the app owner must name the source.
+- SYNcro and disconnectome share the same checksummed FSL 1 mm template,
+  `MNI152NLin6Asym`. This does not establish a mapping for an arbitrary
+  `MNI152-1mm` annotation in another app.
+- TopoFit's scanner-RAS surfaces, dwi2trx's RAS-mm tracts and VesselBoost's
+  analysis outputs inherit their anatomical/diffusion input's frame. These
+  relationships do not promise the same grid. TopoFit's optional ROI does
+  not become a second source for its output frame.
+- CALMaR's selected `atlas`, SYNcro's conditional `lesion-reference`, and
+  TopoFit's `registration-sphere` remain source metadata until their exact
+  relationships are expressible. Do not emit one global vendor space for
+  unrelated subjects or parameter-dependent atlas choices.
+- `FreeSurfer` becomes `freesurfer` without inventing a table revision;
+  `gii` becomes `gifti`. A `surface` category needs the actual accepted
+  encoding list before it can become a format constraint.
+- `moving-to-fixed` on a `neuro:transform` stays in the extension until the
+  transform RFC. Format lists express alternatives: adding the broad
+  `nifti` token beside `displacement-field` would wrongly admit scalar images.
+
+The implementation and source evidence are maintained with
+[Neurodesk's qualifier migration](https://github.com/neurodesk/webapps/pull/109).
+These conservative rules preserve source annotations without claiming they
+have been verified or narrowing the inputs the scientific apps accept.
 
 ## Implementation plan
 
