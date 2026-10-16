@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://niivue.github.io/neuroflow-spec/schemas/0.1/extensions/neuroflow-usage.schema.json",
+  "title": "NeuroFlow Extension: neuroflow/usage",
+  "description": "Schema for the neuroflow/usage extension namespace (RFC 0011). Advisory guidance for agents choosing, calling and recovering from a tool or workflow: when to use it and when not, preconditions, effects, typical duration, example calls, and failure remedies. Every field is optional, and a runtime MUST NOT change validation, planning or execution because of this block. Example inputs are checked against the document's declared inputs by an extension-aware validator, which this schema cannot express.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "useWhen": {
+      "type": "array",
+      "description": "Situations where this operation is the right choice, one sentence each.",
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "avoidWhen": {
+      "type": "array",
+      "description": "Situations where this operation is not the right choice, each with an optional alternative.",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["when"],
+        "properties": {
+          "when": { "$ref": "#/$defs/text" },
+          "instead": {
+            "type": "string",
+            "description": "The id of a tool or workflow document to use instead. A validator warns, and does not reject, when it does not resolve.",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "preconditions": {
+      "type": "array",
+      "description": "What must hold before a run that the input types do not express.",
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "effects": {
+      "type": "array",
+      "description": "What a run does besides producing its declared outputs. Complements, and does not replace, the MCP annotation hints.",
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "duration": {
+      "type": "object",
+      "description": "The author's estimate of run time.",
+      "additionalProperties": false,
+      "required": ["typicalSeconds"],
+      "properties": {
+        "typicalSeconds": { "type": "number", "exclusiveMinimum": 0 },
+        "maxSeconds": { "type": "number", "exclusiveMinimum": 0 },
+        "basis": { "$ref": "#/$defs/text", "description": "The input the estimate was measured on. No identifiable data." }
+      }
+    },
+    "examples": {
+      "type": "array",
+      "description": "Illustrative calls. A runtime MUST NOT run them unprompted.",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "inputs"],
+        "properties": {
+          "title": { "$ref": "#/$defs/text" },
+          "inputs": {
+            "type": "object",
+            "description": "Input id to example value. Keys must be declared inputs and values must fit their types; file values should be <name> placeholders or relative paths."
+          },
+          "outputs": {
+            "type": "object",
+            "description": "An abbreviated example result, output id to value."
+          },
+          "note": { "$ref": "#/$defs/text" }
+        }
+      }
+    },
+    "failures": {
+      "type": "array",
+      "description": "Known failures, checked in order; the first match supplies the remedy.",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["match", "meaning", "remedy"],
+        "properties": {
+          "match": {
+            "type": "object",
+            "description": "When both fields are given, both must match.",
+            "additionalProperties": false,
+            "minProperties": 1,
+            "properties": {
+              "exitCode": { "type": "integer" },
+              "contains": {
+                "type": "string",
+                "description": "A plain, case-sensitive substring of the error message or captured stderr tail. Not a pattern.",
+                "minLength": 1,
+                "maxLength": 300
+              }
+            }
+          },
+          "meaning": { "$ref": "#/$defs/text" },
+          "remedy": { "$ref": "#/$defs/text" },
+          "retry": {
+            "enum": ["never", "after-fix", "safe"],
+            "default": "after-fix",
+            "description": "never: retrying cannot help; after-fix: retry once the remedy is applied; safe: retrying as is may succeed."
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "text": {
+      "type": "string",
+      "description": "Plain text, at most 300 characters.",
+      "minLength": 1,
+      "maxLength": 300
+    }
+  }
+}

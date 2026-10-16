@@ -49,6 +49,11 @@ Status: pre-1.0 draft, created 2026-05-20.
   declare `neuroflow: "0.1.1"`. Adopted from the Neurodesk Webapps
   `automation.json` contracts, revised after the survey below, and merged
   with the Neurodesk draft in neurodesk/webapps#107 into one RFC.
+- [rfcs/0011-agent-usage.md](rfcs/0011-agent-usage.md): draft RFC adding
+  the optional `neuroflow/usage` extension: when to use a tool or workflow
+  and when not (with the alternative), preconditions, effects, typical
+  duration, example calls, and failure remedies, rendered for agents by
+  the MCP binding.
 - [docs/type-qualifiers-survey.md](docs/type-qualifiers-survey.md): survey
   of how workflow languages (CWL, Galaxy, Boutiques, Pydra), vocabularies
   (BIDS, TemplateFlow, EDAM, NIDM, DICOM) and packages (AFNI, SPM, FSL,

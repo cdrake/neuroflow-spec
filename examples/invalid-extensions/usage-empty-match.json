@@ -1,0 +1,116 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.examples/dicom-to-bids-headless",
+  "version": "1.0.0",
+  "description": "Invalid: a failures entry whose match is empty.",
+  "inputs": {
+    "dicom_dir": {
+      "type": "neuro:dicom-folder",
+      "description": "DICOM source directory to import."
+    },
+    "importer": {
+      "type": "core:string",
+      "description": "Importer to run.",
+      "optional": true,
+      "default": "dcm2niix-reproin",
+      "enum": [
+        "dcm2niix-reproin",
+        "heudiconv",
+        "dcm2bids"
+      ]
+    },
+    "subject": {
+      "type": "core:string",
+      "description": "BIDS subject label (default: from the DICOM PatientID).",
+      "optional": true
+    },
+    "session": {
+      "type": "core:string",
+      "description": "BIDS session label.",
+      "optional": true
+    },
+    "anonymize": {
+      "type": "core:boolean",
+      "description": "Also strip dates from the sidecars.",
+      "optional": true,
+      "default": false
+    }
+  },
+  "outputs": {
+    "bids_dir": {
+      "type": "neuro:bids-dataset",
+      "description": "The imported BIDS dataset.",
+      "delivery": {
+        "mode": "core:result-dir",
+        "path": "bids"
+      }
+    }
+  },
+  "outputDelivery": {
+    "default": "core:result-dir"
+  },
+  "extensions": {
+    "neuroflow/usage": {
+      "useWhen": [
+        "Convert a folder of DICOM files to a BIDS dataset without user interaction, as one step in a workflow.",
+        "Re-run an import whose settings are already known, such as the importer, subject and session labels."
+      ],
+      "avoidWhen": [
+        {
+          "when": "A person should review how series map to BIDS names before anything is written.",
+          "instead": "niivue.desktop/dicom-to-bids"
+        },
+        {
+          "when": "Only NIfTI files are needed, without a BIDS layout.",
+          "instead": "niivue.desktop/dicom-to-nifti"
+        }
+      ],
+      "preconditions": [
+        "The output directory has no bids/ folder from an earlier run.",
+        "Send the DICOM through a remote model only when it is de-identified."
+      ],
+      "effects": [
+        "With the heudiconv importer and a heuristic file, runs that file as Python."
+      ],
+      "duration": {
+        "typicalSeconds": 60,
+        "maxSeconds": 900,
+        "basis": "One research MRI session of 35 series on a laptop."
+      },
+      "examples": [
+        {
+          "title": "Import one session with ReproIn naming",
+          "inputs": {
+            "dicom_dir": "<dicom_dir>",
+            "importer": "dcm2niix-reproin",
+            "subject": "01",
+            "session": "baseline",
+            "anonymize": true
+          },
+          "outputs": {
+            "bids_dir": "<output_dir>/bids"
+          }
+        }
+      ],
+      "failures": [
+        {
+          "match": {},
+          "meaning": "An earlier run left its output in the output directory, and the import does not overwrite it.",
+          "remedy": "Use a new output directory, or ask the user before deleting the old bids/ folder.",
+          "retry": "after-fix"
+        },
+        {
+          "match": {
+            "contains": "dcm2niix",
+            "exitCode": 127
+          },
+          "meaning": "dcm2niix could not be started.",
+          "remedy": "Report that dcm2niix is missing; the user can install it or put it on PATH. Retrying will not help.",
+          "retry": "never"
+        }
+      ]
+    }
+  },
+  "$schema": "../../schemas/0.1/tool.schema.json"
+}
