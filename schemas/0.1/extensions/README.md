@@ -18,7 +18,7 @@ registrar; registration happens by pull request.**
 - `registry.schema.json` — validates `registry.json` (CI checks every PR).
 - `<namespace>.schema.json` — one JSON Schema per registered namespace
   (`niivue-ui`, `niivue-runtime`, `bids-profile`, `neurovue`,
-  `neuroflow-mcp`, …).
+  `neuroflow-mcp`, `neuroflow-usage`, …).
 
 ## Registered vs. unregistered
 

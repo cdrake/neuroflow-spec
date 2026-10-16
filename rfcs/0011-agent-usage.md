@@ -371,10 +371,12 @@ every published validator accepts it, because `extensions` is open.
 
 ## Implementation plan
 
-1. Spec: add `schemas/0.1/extensions/neuroflow-usage.schema.json`, the
-   registry entry (`provisional`), a valid and an invalid example, and
-   the harness entries in `tests/validate.mjs`. Amend RFC 0009 §1.1,
-   §2 and §1.4/§3 as above.
+1. Spec: `schemas/0.1/extensions/neuroflow-usage.schema.json`, the
+   registry entry (`provisional`), the valid example
+   `examples/agent-usage.neuroflow.json`, eight invalid examples under
+   `examples/invalid-extensions/usage-*.json`, and the example-input
+   check in `tests/validate.mjs` (done in this draft). Amend RFC 0009
+   §1.1, §2 and §1.4/§3 as above.
 2. NeuroFlow reference runtime: render the block in
    `neuroflow-mcp`, add the list fields, match failures, and lint
    examples against input types in `neuroflow_validate`.

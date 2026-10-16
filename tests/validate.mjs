@@ -31,6 +31,7 @@ const schemaFiles = [
   'extensions/bids-profile.schema.json',
   'extensions/neurovue.schema.json',
   'extensions/neuroflow-mcp.schema.json',
+  'extensions/neuroflow-usage.schema.json',
   'extensions/registry.schema.json'
 ]
 for (const rel of schemaFiles) {
@@ -178,6 +179,43 @@ const semanticChecks = {
       }
     }
     return errors
+  },
+  // RFC 0011, "Rules": example inputs must name declared inputs, and each value
+  // must fit the input's declared type and enum.
+  'neuroflow/usage': (block, doc) => {
+    const errors = []
+    const declared = doc.inputs ?? {}
+    for (const [i, example] of (block?.examples ?? []).entries()) {
+      for (const [id, value] of Object.entries(example?.inputs ?? {})) {
+        const decl = declared[id]
+        if (!decl) {
+          errors.push(`examples/${i}/inputs: '${id}' is not a declared input (declared: ${Object.keys(declared).join(', ') || 'none'})`)
+          continue
+        }
+        if (!exampleValueFits(decl.type, value)) {
+          errors.push(`examples/${i}/inputs/${id}: ${JSON.stringify(value)} does not fit type ${decl.type}`)
+        } else if (Array.isArray(decl.enum) && !decl.enum.some((v) => JSON.stringify(v) === JSON.stringify(value))) {
+          errors.push(`examples/${i}/inputs/${id}: ${JSON.stringify(value)} is not one of ${JSON.stringify(decl.enum)}`)
+        }
+      }
+    }
+    return errors
+  }
+}
+
+// Whether an example value fits a declared type. Artifact types (neuro:, bids:,
+// extension types) take a string: a placeholder, a relative path or a URI.
+function exampleValueFits (type, value) {
+  const array = /^core:array<(.+)>$/.exec(type)
+  if (array) return Array.isArray(value) && value.every((v) => exampleValueFits(array[1], v))
+  switch (type) {
+    case 'core:string': return typeof value === 'string'
+    case 'core:number': return typeof value === 'number'
+    case 'core:integer': return Number.isInteger(value)
+    case 'core:boolean': return typeof value === 'boolean'
+    case 'core:object': return value !== null && typeof value === 'object' && !Array.isArray(value)
+    case 'core:json': return true
+    default: return typeof value === 'string'
   }
 }
 
