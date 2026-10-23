@@ -488,6 +488,11 @@ A reference binding:
 
 A binding object MUST contain exactly one of `constant` or `ref`.
 
+A binding whose value is a single value MAY fill an input of type
+`core:array<T>` when the value's type is compatible with `T`. The executor
+passes it as a one-element array, and qualifiers on the input (§7.1) apply to
+that element. An array value MUST NOT fill an input that is not an array.
+
 ## 10. Workflow Documents
 
 A workflow document defines a pipeline contract.
