@@ -6,8 +6,8 @@
   "$defs": {
     "specVersion": {
       "type": "string",
-      "description": "NeuroFlow specification version this document targets. 0.1.1 is required for a document that carries any of the type qualifiers of RFC 0010 (formats, space, resolution, density, labelSystem).",
-      "enum": ["0.1.0", "0.1.1"]
+      "description": "NeuroFlow specification version this document targets. 0.1.1 or later is required for a document that carries any of the type qualifiers of RFC 0010 (formats, space, resolution, density, labelSystem); 0.1.2 is required for a document that carries minItems or maxItems.",
+      "enum": ["0.1.0", "0.1.1", "0.1.2"]
     },
     "semver": {
       "type": "string",
@@ -174,6 +174,8 @@
         "enum": { "type": "array", "description": "Constrained set of allowed values.", "items": {} },
         "min": { "type": "number", "description": "Minimum value for numeric types." },
         "max": { "type": "number", "description": "Maximum value for numeric types." },
+        "minItems": { "type": "integer", "minimum": 0, "description": "Fewest items an array type accepts. A single value bound to it counts as one item." },
+        "maxItems": { "type": "integer", "minimum": 0, "description": "Most items an array type accepts. A single value bound to it counts as one item." },
         "formats": { "$ref": "#/$defs/formats" },
         "space": { "$ref": "#/$defs/space" },
         "resolution": { "$ref": "#/$defs/resolution" },
@@ -181,7 +183,13 @@
         "labelSystem": { "$ref": "#/$defs/labelSystem" },
         "extensions": { "$ref": "#/$defs/extensions" }
       },
-      "allOf": [{ "$ref": "#/$defs/typeQualifierRules" }]
+      "allOf": [
+        { "$ref": "#/$defs/typeQualifierRules" },
+        {
+          "if": { "anyOf": [{ "required": ["minItems"] }, { "required": ["maxItems"] }] },
+          "then": { "properties": { "type": { "type": "string", "pattern": "^core:array<" } } }
+        }
+      ]
     },
     "qualifierInputRef": {
       "type": "string",

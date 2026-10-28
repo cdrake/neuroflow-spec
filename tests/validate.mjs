@@ -62,33 +62,39 @@ const report = (ok, label, detail) => {
 const validatorFor = (doc) => validators[doc && doc.kind]
 
 // RFC 0010, "Specification version": a document that carries any type
-// qualifier must declare neuroflow 0.1.1. JSON Schema cannot reach the nested
+// qualifier must declare neuroflow 0.1.1 or later. JSON Schema cannot reach the nested
 // declarations from the envelope, so this is a semantic rule.
+// Spec 0.1.2: likewise, minItems/maxItems require neuroflow 0.1.2.
 const QUALIFIERS = ['formats', 'space', 'resolution', 'density', 'labelSystem']
-const findQualifier = (node, path = '') => {
+const ITEM_COUNTS = ['minItems', 'maxItems']
+const findQualifier = (node, path = '', keys = QUALIFIERS) => {
   if (Array.isArray(node)) {
     for (const [i, item] of node.entries()) {
-      const hit = findQualifier(item, `${path}/${i}`)
+      const hit = findQualifier(item, `${path}/${i}`, keys)
       if (hit) return hit
     }
     return null
   }
   if (!node || typeof node !== 'object') return null
   if (typeof node.type === 'string') {
-    const key = QUALIFIERS.find((q) => q in node)
+    const key = keys.find((q) => q in node)
     if (key) return `${path}/${key}`
   }
   for (const [key, value] of Object.entries(node)) {
     if (key === 'extensions') continue
-    const hit = findQualifier(value, `${path}/${key}`)
+    const hit = findQualifier(value, `${path}/${key}`, keys)
     if (hit) return hit
   }
   return null
 }
 const versionErrors = (doc) => {
   const hit = findQualifier(doc)
-  if (hit && doc.neuroflow !== '0.1.1') {
-    return [`${hit}: a document with type qualifiers must declare neuroflow 0.1.1 (found ${JSON.stringify(doc.neuroflow)})`]
+  if (hit && doc.neuroflow !== '0.1.1' && doc.neuroflow !== '0.1.2') {
+    return [`${hit}: a document with type qualifiers must declare neuroflow 0.1.1 or later (found ${JSON.stringify(doc.neuroflow)})`]
+  }
+  const counted = findQualifier(doc, '', ITEM_COUNTS)
+  if (counted && doc.neuroflow !== '0.1.2') {
+    return [`${counted}: a document with minItems or maxItems must declare neuroflow 0.1.2 (found ${JSON.stringify(doc.neuroflow)})`]
   }
   return []
 }

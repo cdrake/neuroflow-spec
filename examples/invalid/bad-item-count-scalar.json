@@ -1,0 +1,15 @@
+{
+  "neuroflow": "0.1.2",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-item-count-scalar",
+  "version": "1.0.0",
+  "description": "minItems on a declaration that is not an array.",
+  "inputs": {
+    "value": {
+      "type": "neuro:volume",
+      "description": "Test input.",
+      "minItems": 2
+    }
+  },
+  "outputs": {}
+}

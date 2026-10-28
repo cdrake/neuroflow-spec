@@ -1,0 +1,15 @@
+{
+  "neuroflow": "0.1.1",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-item-count-version",
+  "version": "1.0.0",
+  "description": "maxItems in a document that declares 0.1.1; item counts require 0.1.2.",
+  "inputs": {
+    "value": {
+      "type": "core:array<neuro:volume>",
+      "description": "Test input.",
+      "maxItems": 2
+    }
+  },
+  "outputs": {}
+}
