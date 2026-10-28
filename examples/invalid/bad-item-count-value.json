@@ -1,5 +1,5 @@
 {
-  "neuroflow": "0.1.0",
+  "neuroflow": "0.1.2",
   "kind": "tool",
   "id": "neuroflow.test/bad-item-count-value",
   "version": "1.0.0",

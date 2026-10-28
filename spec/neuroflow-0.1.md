@@ -176,10 +176,11 @@ Every NeuroFlow document uses a common envelope:
 ```
 
 `neuroflow` identifies the specification version used by the document. For this
-draft it MUST be `0.1.0`, or `0.1.1` for a document that carries any of the
-type qualifiers of §7.1 (RFC 0010). A validator built for `0.1.0` rejects a
-`0.1.1` document; that is intended, since the qualifiers are execution
-requirements it cannot check.
+draft it MUST be `0.1.0`; `0.1.1` or `0.1.2` for a document that carries any of
+the type qualifiers of §7.1 (RFC 0010); and `0.1.2` for a document that carries
+`minItems` or `maxItems` (§7). A validator built for an earlier version rejects
+a later one; that is intended, since these fields are execution requirements
+it cannot check.
 
 `kind` identifies the document family and MUST be `workflow`, `tool`,
 `heuristic`, or `provenance`.
@@ -302,14 +303,16 @@ items a `core:array<...>` declaration accepts. They MUST NOT appear on a
 declaration whose type is not an array. A validator SHOULD count the items a
 binding supplies (a single value counts as one, see §9) and reject a count
 outside the bounds; when the count is known only at run time, the executor
-MUST reject a value outside the bounds before the step runs.
+MUST reject a value outside the bounds before the step runs. A document that
+carries either field declares `"neuroflow": "0.1.2"` (§5).
 
 ### 7.1 Type Qualifiers
 
 A qualified type names a concept; a type qualifier narrows how a value of
 that type is encoded or situated, so that validators can compare two
 declarations and planners can insert a conversion between them (RFC 0010).
-A document that carries any qualifier declares `"neuroflow": "0.1.1"` (§5).
+A document that carries any qualifier declares `"neuroflow": "0.1.1"` or
+later (§5).
 
 ```json
 {
@@ -1033,7 +1036,11 @@ validator SHOULD check:
   axis is reported for the executor; a qualifier of the form
   `inputs.<local-id>` appears only on a tool output and names an input
   of the same tool; a document that carries any qualifier declares
-  `neuroflow` `0.1.1` (§5)
+  `neuroflow` `0.1.1` or later (§5)
+- array item counts: `minItems` and `maxItems` appear only on a
+  `core:array<...>` declaration, a binding count outside them fails
+  validation, and a document that carries either declares `neuroflow`
+  `0.1.2` (§5, §7)
 - condition reference validity
 - heuristic source validity
 - heuristic output type compatibility
