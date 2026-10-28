@@ -294,8 +294,15 @@ Array values use the container form `core:array<element-type>`, for example
 `core:array<neuro:volume>` or `core:array<core:string>`.
 
 Type declarations MAY include `description`, `optional`, `default`, `enum`,
-`min`, `max`, `label`, `extensions`, and the type qualifiers `formats`,
-`space`, `resolution`, `density`, and `labelSystem`.
+`min`, `max`, `minItems`, `maxItems`, `label`, `extensions`, and the type
+qualifiers `formats`, `space`, `resolution`, `density`, and `labelSystem`.
+
+`minItems` and `maxItems` are non-negative integers that bound the number of
+items a `core:array<...>` declaration accepts. They MUST NOT appear on a
+declaration whose type is not an array. A validator SHOULD count the items a
+binding supplies (a single value counts as one, see §9) and reject a count
+outside the bounds; when the count is known only at run time, the executor
+MUST reject a value outside the bounds before the step runs.
 
 ### 7.1 Type Qualifiers
 

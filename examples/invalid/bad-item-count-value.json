@@ -1,0 +1,15 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.test/bad-item-count-value",
+  "version": "1.0.0",
+  "description": "A negative maxItems.",
+  "inputs": {
+    "value": {
+      "type": "core:array<neuro:volume>",
+      "description": "Test input.",
+      "maxItems": -1
+    }
+  },
+  "outputs": {}
+}

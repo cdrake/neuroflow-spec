@@ -1,0 +1,27 @@
+{
+  "neuroflow": "0.1.0",
+  "kind": "tool",
+  "id": "neuroflow.examples/topup",
+  "version": "1.0.0",
+  "description": "Susceptibility distortion estimation from a pair of opposite phase-encoding images. Exercises minItems and maxItems on array inputs.",
+  "inputs": {
+    "images": {
+      "type": "core:array<neuro:volume>",
+      "description": "Exactly two b=0 images acquired with opposite phase-encoding directions.",
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "acqparams": {
+      "type": "core:array<core:string>",
+      "description": "One acquisition-parameter row per image.",
+      "minItems": 1
+    }
+  },
+  "outputs": {
+    "field": {
+      "type": "neuro:volume",
+      "description": "Estimated off-resonance field in Hz.",
+      "delivery": { "mode": "core:result-dir", "path": "field.nii.gz" }
+    }
+  }
+}
