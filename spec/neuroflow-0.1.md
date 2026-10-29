@@ -179,7 +179,7 @@ Every NeuroFlow document uses a common envelope:
 draft it MUST be `0.1.0`; `0.1.1` or later for a document that carries any of
 the type qualifiers of §7.1 (RFC 0010); `0.1.2` or later for a document that
 carries `minItems` or `maxItems` (§7); and `0.1.3` for a workflow output that
-carries any field beyond `type`, `ref`, and `extensions` (§13). A validator
+carries `description`, `label`, or `optional` (§13). A validator
 built for an earlier version rejects a later one; that is intended, since these
 fields are execution requirements it cannot check.
 
@@ -633,8 +633,9 @@ An output declaration MAY also carry `description`, `label`, `optional`,
 against the resolved step output as it does for a tool input (RFC 0010).
 Unlike a type declaration, `description` is not required. It MUST NOT carry
 `default`, since the value always comes from `ref`, or `delivery`, which
-belongs to the tool that produces the value. A document whose workflow output
-carries any field beyond `type`, `ref`, and `extensions` declares
+belongs to the tool that produces the value. Qualifiers on a workflow output
+need `"neuroflow": "0.1.1"` or later, as on any declaration (§7.1); a document
+whose workflow output carries `description`, `label`, or `optional` declares
 `"neuroflow": "0.1.3"` (§5).
 
 `optional` (default `false`) says whether the run may complete without the
@@ -1070,8 +1071,8 @@ validator SHOULD check:
 - workflow output declarations: a workflow output carries no `default` or
   `delivery`, a non-optional workflow output that references an optional step
   output is reported as a warning, and a document whose workflow output
-  carries any field beyond `type`, `ref`, and `extensions` declares
-  `neuroflow` `0.1.3` (§5, §13)
+  carries `description`, `label`, or `optional` declares `neuroflow`
+  `0.1.3` (§5, §13)
 - condition reference validity
 - heuristic source validity
 - heuristic output type compatibility

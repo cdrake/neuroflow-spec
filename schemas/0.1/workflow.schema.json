@@ -199,7 +199,7 @@
     },
     "outputDef": {
       "type": "object",
-      "description": "A public workflow output bound to a step output. May also carry description, label, optional and the RFC 0010 type qualifiers; never default, since the value always comes from ref. Any field beyond type, ref and extensions requires neuroflow 0.1.3.",
+      "description": "A public workflow output bound to a step output. May also carry description, label, optional and the RFC 0010 type qualifiers; never default, since the value always comes from ref. Qualifiers require neuroflow 0.1.1 or later, as on any declaration; description, label and optional require 0.1.3.",
       "required": ["type", "ref"],
       "additionalProperties": false,
       "properties": {

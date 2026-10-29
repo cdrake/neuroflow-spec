@@ -110,7 +110,7 @@ and adding compatible schema metadata. Within a minor line, the `neuroflow`
 envelope value advances by a patch when a document needs a feature an older
 validator would not check, so that the older validator rejects it: `0.1.1` for
 the RFC 0010 qualifiers, `0.1.2` for array item counts (`minItems`/`maxItems`),
-`0.1.3` for workflow output fields beyond `type` and `ref` (such as `optional`).
+`0.1.3` for `description`, `label` and `optional` on a workflow output.
 Breaking changes include removing fields,
 renaming fields, tightening validation in ways that reject previously valid
 documents, removing enum values, changing required fields, or changing execution

@@ -65,8 +65,8 @@ const validatorFor = (doc) => validators[doc && doc.kind]
 // qualifier must declare neuroflow 0.1.1 or later. JSON Schema cannot reach the nested
 // declarations from the envelope, so this is a semantic rule.
 // Spec 0.1.2: likewise, minItems/maxItems require neuroflow 0.1.2 or later.
-// Spec 0.1.3: a workflow output with any field beyond type, ref and extensions
-// requires neuroflow 0.1.3.
+// Spec 0.1.3: a workflow output with description, label or optional requires
+// neuroflow 0.1.3. Qualifiers on it follow the 0.1.1 rule above.
 const QUALIFIERS = ['formats', 'space', 'resolution', 'density', 'labelSystem']
 const ITEM_COUNTS = ['minItems', 'maxItems']
 const findQualifier = (node, path = '', keys = QUALIFIERS) => {
@@ -89,11 +89,11 @@ const findQualifier = (node, path = '', keys = QUALIFIERS) => {
   }
   return null
 }
-const BASE_OUTPUT_FIELDS = ['type', 'ref', 'extensions']
+const OUTPUT_FIELDS = ['description', 'label', 'optional']
 const findOutputField = (doc) => {
   if (doc?.kind !== 'workflow') return null
   for (const [name, output] of Object.entries(doc.outputs ?? {})) {
-    const key = Object.keys(output ?? {}).find((k) => !BASE_OUTPUT_FIELDS.includes(k))
+    const key = Object.keys(output ?? {}).find((k) => OUTPUT_FIELDS.includes(k))
     if (key) return `/outputs/${name}/${key}`
   }
   return null
@@ -111,7 +111,7 @@ const versionErrors = (doc) => {
   }
   const field = findOutputField(doc)
   if (field && !atLeast(doc, '0.1.3')) {
-    return [`${field}: a workflow output with fields beyond type, ref and extensions must declare neuroflow 0.1.3 (found ${JSON.stringify(doc.neuroflow)})`]
+    return [`${field}: a workflow output with description, label or optional must declare neuroflow 0.1.3 (found ${JSON.stringify(doc.neuroflow)})`]
   }
   return []
 }
