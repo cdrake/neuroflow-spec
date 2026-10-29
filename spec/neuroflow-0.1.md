@@ -176,11 +176,12 @@ Every NeuroFlow document uses a common envelope:
 ```
 
 `neuroflow` identifies the specification version used by the document. For this
-draft it MUST be `0.1.0`; `0.1.1` or `0.1.2` for a document that carries any of
-the type qualifiers of §7.1 (RFC 0010); and `0.1.2` for a document that carries
-`minItems` or `maxItems` (§7). A validator built for an earlier version rejects
-a later one; that is intended, since these fields are execution requirements
-it cannot check.
+draft it MUST be `0.1.0`; `0.1.1` or later for a document that carries any of
+the type qualifiers of §7.1 (RFC 0010); `0.1.2` or later for a document that
+carries `minItems` or `maxItems` (§7); and `0.1.3` for a workflow output that
+carries `description`, `label`, or `optional` (§13). A validator
+built for an earlier version rejects a later one; that is intended, since these
+fields are execution requirements it cannot check.
 
 `kind` identifies the document family and MUST be `workflow`, `tool`,
 `heuristic`, or `provenance`.
@@ -304,7 +305,7 @@ declaration whose type is not an array. A validator SHOULD count the items a
 binding supplies (a single value counts as one, see §9) and reject a count
 outside the bounds; when the count is known only at run time, the executor
 MUST reject a value outside the bounds before the step runs. A document that
-carries either field declares `"neuroflow": "0.1.2"` (§5).
+carries either field declares `"neuroflow": "0.1.2"` or later (§5).
 
 ### 7.1 Type Qualifiers
 
@@ -469,8 +470,9 @@ Examples:
 - `steps.convert.outputs.volumes`
 
 A reference MUST resolve to exactly one declared value. A reference to a skipped
-step output is invalid unless the consuming field declares an explicit fallback
-or the referenced output is nullable.
+step output is invalid unless the consuming field declares an explicit fallback,
+the consumer is an optional workflow output (§13), or the referenced output is
+nullable.
 
 Open issue: later drafts may add reference paths into structured objects and
 arrays. This draft only defines references to declared workflow values and the
@@ -605,20 +607,44 @@ future draft.
 
 ## 13. Workflow Outputs
 
-Workflow outputs map public output identifiers to a type declaration and a
-source reference.
+Workflow outputs map public output identifiers to an output declaration: a
+`type` and a source reference `ref`, both required.
 
 ```json
 {
   "bids_dir": {
     "type": "neuro:bids-dataset",
     "ref": "steps.postpass.outputs.bids_dir"
+  },
+  "qc_report": {
+    "type": "core:file",
+    "description": "Quality-control report, when the QC step runs.",
+    "optional": true,
+    "ref": "steps.qc.outputs.report"
   }
 }
 ```
 
 `ref` MUST resolve to a step output. Its resolved type MUST be compatible with
 the declared output type.
+
+An output declaration MAY also carry `description`, `label`, `optional`,
+`extensions`, and the type qualifiers of §7.1, which the validator compares
+against the resolved step output as it does for a tool input (RFC 0010).
+Unlike a type declaration, `description` is not required. It MUST NOT carry
+`default`, since the value always comes from `ref`, or `delivery`, which
+belongs to the tool that produces the value. Qualifiers on a workflow output
+need `"neuroflow": "0.1.1"` or later, as on any declaration (§7.1); a document
+whose workflow output carries `description`, `label`, or `optional` declares
+`"neuroflow": "0.1.3"` (§5).
+
+`optional` (default `false`) says whether the run may complete without the
+output. When the step output named by `ref` was not produced, because the step
+was skipped or the tool output is itself optional, an optional workflow output
+is omitted from the run's outputs; this is not a failure. A validator SHOULD
+warn when a non-optional workflow output references an optional step output.
+What a runtime does when a non-optional workflow output is not produced is left
+to a later draft (§26).
 
 ## 14. Tool Documents
 
@@ -941,8 +967,9 @@ A conforming runtime that produces provenance MUST ensure that:
 
 - Every workflow input is represented as a `workflow-input` entity referenced
   in `inputs`.
-- Every workflow output is represented as a `workflow-output` entity
-  referenced in `outputs`.
+- Every workflow output the run produced is represented as a
+  `workflow-output` entity referenced in `outputs`. An optional workflow output
+  that was not produced (§13) has no entity.
 - Every executed step appears as one activity.
 - Every entity referenced by an activity's `used` or `generated` exists in
   `entities`.
@@ -1040,7 +1067,12 @@ validator SHOULD check:
 - array item counts: `minItems` and `maxItems` appear only on a
   `core:array<...>` declaration, a binding count outside them fails
   validation, and a document that carries either declares `neuroflow`
-  `0.1.2` (§5, §7)
+  `0.1.2` or later (§5, §7)
+- workflow output declarations: a workflow output carries no `default` or
+  `delivery`, a non-optional workflow output that references an optional step
+  output is reported as a warning, and a document whose workflow output
+  carries `description`, `label`, or `optional` declares `neuroflow`
+  `0.1.3` (§5, §13)
 - condition reference validity
 - heuristic source validity
 - heuristic output type compatibility
@@ -1671,7 +1703,9 @@ standards rather than replace them.
 ## 26. Open Issues
 
 - Version range grammar for tool references.
-- Nullable and optional output semantics.
+- Nullable output semantics: how a skipped step's outputs are represented
+  downstream (§8, §19), and what a runtime does when a non-optional workflow
+  output is not produced (§13). Optional workflow outputs are defined in §13.
 - Reference paths into arrays and structured objects.
 - Explicit step dependencies versus object-order execution.
 - BIDS entity modeling.

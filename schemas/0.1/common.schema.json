@@ -6,8 +6,8 @@
   "$defs": {
     "specVersion": {
       "type": "string",
-      "description": "NeuroFlow specification version this document targets. 0.1.1 or later is required for a document that carries any of the type qualifiers of RFC 0010 (formats, space, resolution, density, labelSystem); 0.1.2 is required for a document that carries minItems or maxItems.",
-      "enum": ["0.1.0", "0.1.1", "0.1.2"]
+      "description": "NeuroFlow specification version this document targets. 0.1.1 or later is required for a document that carries any of the type qualifiers of RFC 0010 (formats, space, resolution, density, labelSystem); 0.1.2 or later is required for a document that carries minItems or maxItems; 0.1.3 is required for a workflow output that carries description, label or optional.",
+      "enum": ["0.1.0", "0.1.1", "0.1.2", "0.1.3"]
     },
     "semver": {
       "type": "string",

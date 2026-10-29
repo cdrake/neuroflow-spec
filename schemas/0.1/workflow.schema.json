@@ -199,14 +199,23 @@
     },
     "outputDef": {
       "type": "object",
-      "description": "A public workflow output bound to a step output.",
+      "description": "A public workflow output bound to a step output. May also carry description, label, optional and the RFC 0010 type qualifiers; never default, since the value always comes from ref. Qualifiers require neuroflow 0.1.1 or later, as on any declaration; description, label and optional require 0.1.3.",
       "required": ["type", "ref"],
       "additionalProperties": false,
       "properties": {
         "type": { "$ref": "common.schema.json#/$defs/qualifiedType" },
         "ref": { "$ref": "common.schema.json#/$defs/stepOutputReference" },
+        "description": { "type": "string" },
+        "label": { "type": "string" },
+        "optional": { "type": "boolean", "default": false, "description": "Whether the run may complete without this output. An optional output whose ref was not produced is omitted from the run's outputs." },
+        "formats": { "$ref": "common.schema.json#/$defs/formats" },
+        "space": { "$ref": "common.schema.json#/$defs/space" },
+        "resolution": { "$ref": "common.schema.json#/$defs/resolution" },
+        "density": { "$ref": "common.schema.json#/$defs/density" },
+        "labelSystem": { "$ref": "common.schema.json#/$defs/labelSystem" },
         "extensions": { "$ref": "common.schema.json#/$defs/extensions" }
-      }
+      },
+      "allOf": [{ "$ref": "common.schema.json#/$defs/typeQualifierRules" }]
     },
     "workflowErrorPolicyDef": {
       "type": "object",

@@ -64,7 +64,9 @@ const validatorFor = (doc) => validators[doc && doc.kind]
 // RFC 0010, "Specification version": a document that carries any type
 // qualifier must declare neuroflow 0.1.1 or later. JSON Schema cannot reach the nested
 // declarations from the envelope, so this is a semantic rule.
-// Spec 0.1.2: likewise, minItems/maxItems require neuroflow 0.1.2.
+// Spec 0.1.2: likewise, minItems/maxItems require neuroflow 0.1.2 or later.
+// Spec 0.1.3: a workflow output with description, label or optional requires
+// neuroflow 0.1.3. Qualifiers on it follow the 0.1.1 rule above.
 const QUALIFIERS = ['formats', 'space', 'resolution', 'density', 'labelSystem']
 const ITEM_COUNTS = ['minItems', 'maxItems']
 const findQualifier = (node, path = '', keys = QUALIFIERS) => {
@@ -87,14 +89,29 @@ const findQualifier = (node, path = '', keys = QUALIFIERS) => {
   }
   return null
 }
+const OUTPUT_FIELDS = ['description', 'label', 'optional']
+const findOutputField = (doc) => {
+  if (doc?.kind !== 'workflow') return null
+  for (const [name, output] of Object.entries(doc.outputs ?? {})) {
+    const key = Object.keys(output ?? {}).find((k) => OUTPUT_FIELDS.includes(k))
+    if (key) return `/outputs/${name}/${key}`
+  }
+  return null
+}
+const VERSIONS = ['0.1.0', '0.1.1', '0.1.2', '0.1.3']
+const atLeast = (doc, version) => VERSIONS.indexOf(doc.neuroflow) >= VERSIONS.indexOf(version)
 const versionErrors = (doc) => {
   const hit = findQualifier(doc)
-  if (hit && doc.neuroflow !== '0.1.1' && doc.neuroflow !== '0.1.2') {
+  if (hit && !atLeast(doc, '0.1.1')) {
     return [`${hit}: a document with type qualifiers must declare neuroflow 0.1.1 or later (found ${JSON.stringify(doc.neuroflow)})`]
   }
   const counted = findQualifier(doc, '', ITEM_COUNTS)
-  if (counted && doc.neuroflow !== '0.1.2') {
-    return [`${counted}: a document with minItems or maxItems must declare neuroflow 0.1.2 (found ${JSON.stringify(doc.neuroflow)})`]
+  if (counted && !atLeast(doc, '0.1.2')) {
+    return [`${counted}: a document with minItems or maxItems must declare neuroflow 0.1.2 or later (found ${JSON.stringify(doc.neuroflow)})`]
+  }
+  const field = findOutputField(doc)
+  if (field && !atLeast(doc, '0.1.3')) {
+    return [`${field}: a workflow output with description, label or optional must declare neuroflow 0.1.3 (found ${JSON.stringify(doc.neuroflow)})`]
   }
   return []
 }
