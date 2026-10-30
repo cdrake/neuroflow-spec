@@ -531,7 +531,9 @@ caller, user, host application, or surrounding workflow.
 
 `context.fields` maps local identifiers to type declarations for values
 accumulated during a workflow run. Context fields MAY include `heuristic`,
-`dependsOn`, `default`, `enum`, `min`, and `max`.
+`dependsOn`, `default`, `enum`, `min`, `max`, and the type qualifiers of §7.1,
+which a validator compares when `outputMappings` writes a step output into the
+field (§12).
 
 `steps` maps step identifiers to step definitions. Object member order is the
 authorial pipeline order. Portable runtimes SHOULD derive dependencies from
