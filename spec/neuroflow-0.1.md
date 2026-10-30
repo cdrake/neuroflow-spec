@@ -645,8 +645,8 @@ output. When the step output named by `ref` was not produced, because the step
 was skipped or the tool output is itself optional, an optional workflow output
 is omitted from the run's outputs; this is not a failure. A validator SHOULD
 warn when a non-optional workflow output references an optional step output.
-What a runtime does when a non-optional workflow output is not produced is left
-to a later draft (§26).
+A runtime MUST treat a non-optional workflow output that was not produced as a
+run failure, as §15.6 does for a missing required tool output.
 
 ## 14. Tool Documents
 
@@ -1706,8 +1706,8 @@ standards rather than replace them.
 
 - Version range grammar for tool references.
 - Nullable output semantics: how a skipped step's outputs are represented
-  downstream (§8, §19), and what a runtime does when a non-optional workflow
-  output is not produced (§13). Optional workflow outputs are defined in §13.
+  downstream (§8, §19). Optional workflow outputs, and the failure when a
+  non-optional one is not produced, are defined in §13.
 - Reference paths into arrays and structured objects.
 - Explicit step dependencies versus object-order execution.
 - BIDS entity modeling.
